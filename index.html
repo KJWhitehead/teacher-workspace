@@ -5,188 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tocyn Allan - Exit Ticket</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6 flex justify-center items-center">
-    <div id="root" class="w-full max-w-xl"></div>
 
-    <script type="text/babel">
-        const { useState } = React;
-const [activePoll] = useState(() => {
-    const saved = localStorage.getItem('welsh_active_poll');
-    return saved ? JSON.parse(saved) : {
-        topicTitle: 'Treigladau a’r Amser Gorffennol',
-        concepts: [
-            "Treigladau (Mutations - Soft, Nasal, Aspirate)",
-            "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
-            "Berfau a Rhagenwau (Verbs & Pronouns)"
-        ]
-    };
-});
-        const DEFAULT_CONCEPTS = [
-            "Treigladau (Mutations - Soft, Nasal, Aspirate)",
-            "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
-            "Berfau a Rhagenwau (Verbs & Pronouns)",
-            "Patrymau Iaith (Sentence Patterns & Word Order)",
-            "Ymarfer Siarad (Conversational Confidence)"
-        ];
+    <div id="app" class="w-full max-w-xl">
+        <!-- Form Container -->
+        <div id="form-container" class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
+            <div class="border-b border-slate-700 pb-4">
+                <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dysgu Cymraeg</span>
+                <h1 id="poll-topic" class="text-xl font-bold text-white mt-2">Tocyn Allan / Exit Ticket</h1>
+                <p id="poll-subject" class="text-xs text-slate-400">Welsh Language Second Language</p>
+            </div>
 
-        function StudentPortal() {
-            const [confidence, setConfidence] = useState(3);
-            const [difficultConcept, setDifficultConcept] = useState(DEFAULT_CONCEPTS[0]);
-            const [difficultyReflection, setDifficultyReflection] = useState('');
-            const [canExplain, setCanExplain] = useState('Almost');
-            const [explanationText, setExplanationText] = useState('');
-            const [studentName, setStudentName] = useState('');
-            const [feedback, setFeedback] = useState({ clarity: 4, examples: 4, pace: 4, practice: 4, nextSteps: 4 });
-            const [submitted, setSubmitted] = useState(false);
+            <form id="ticket-form" class="space-y-6">
+                <!-- Student Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Eich Enw / Your Name:</label>
+                    <input type="text" id="studentName" required placeholder="e.g. Mali Evans" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
 
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!studentName.trim()) {
-                    alert("Os gwelwch yn dda, nodwch eich enw. / Please enter your name.");
-                    return;
-                }
+                <!-- Section A -->
+                <div class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
+                    <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section A: Dealltwriaeth / Understanding</h2>
+                    
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-2">How confident do you feel about today's topic? (1 - 5)</label>
+                        <div class="flex gap-2" id="confidence-selector">
+                            <button type="button" data-val="1" class="conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-slate-900 border-slate-700 text-slate-400">1</button>
+                            <button type="button" data-val="2" class="conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-slate-900 border-slate-700 text-slate-400">2</button>
+                            <button type="button" data-val="3" class="conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-emerald-600 border-emerald-500 text-white shadow-lg">3</button>
+                            <button type="button" data-val="4" class="conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-slate-900 border-slate-700 text-slate-400">4</button>
+                            <button type="button" data-val="5" class="conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-slate-900 border-slate-700 text-slate-400">5</button>
+                        </div>
+                    </div>
 
-                const submission = {
-                    id: `sub-${Date.now()}`,
-                    studentName,
-                    confidence,
-                    difficultConcept,
-                    difficultyReflection,
-                    canExplain,
-                    explanationText,
-                    feedback,
-                    timestamp: new Date().toISOString()
-                };
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-1">Which part felt most difficult today?</label>
+                        <select id="difficultConcept" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
 
-                // Store in shared local memory or cloud endpoint
-                const existing = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
-                localStorage.setItem('welsh_et_submissions', JSON.stringify([submission, ...existing]));
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-1">Could you explain the main rule to another learner?</label>
+                        <div class="flex gap-2" id="explain-selector">
+                            <button type="button" data-val="Yes" class="explain-btn flex-1 py-2 rounded-xl font-semibold text-xs border bg-slate-900 border-slate-700 text-slate-400">Yes</button>
+                            <button type="button" data-val="Almost" class="explain-btn flex-1 py-2 rounded-xl font-semibold text-xs border bg-emerald-600 border-emerald-500 text-white">Almost</button>
+                            <button type="button" data-val="Not yet" class="explain-btn flex-1 py-2 rounded-xl font-semibold text-xs border bg-slate-900 border-slate-700 text-slate-400">Not yet</button>
+                        </div>
+                    </div>
+                </div>
 
-                setSubmitted(true);
+                <!-- Section B -->
+                <div class="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
+                    <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section B: Profiad Dysgu / Learning Experience</h2>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">The explanations were clear.</span>
+                            <span class="text-emerald-400 font-bold">4 / 5</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">The examples helped me.</span>
+                            <span class="text-emerald-400 font-bold">4 / 5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/30">
+                    Cyflwyno / Submit Exit Ticket
+                </button>
+            </form>
+        </div>
+
+        <!-- Success Container -->
+        <div id="success-container" class="hidden bg-slate-800 p-8 rounded-2xl border border-emerald-500/30 text-center space-y-4 shadow-2xl">
+            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+            <h2 class="text-xl font-bold text-white">Diolch! Response Submitted!</h2>
+            <p class="text-sm text-slate-400">Your feedback has been sent to your teacher's dashboard.</p>
+            <button onclick="resetForm()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded-xl transition">
+                Submit Another Response
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedConfidence = 3;
+        let selectedExplain = 'Almost';
+
+        // Load Active Poll from localStorage
+        function loadPoll() {
+            const savedPoll = JSON.parse(localStorage.getItem('welsh_active_poll') || 'null') || {
+                subject: 'Welsh Second Language',
+                topicTitle: 'Treigladau a’r Amser Gorffennol (Mutations & Past Tense)',
+                concepts: [
+                    "Treigladau (Mutations - Soft, Nasal, Aspirate)",
+                    "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
+                    "Berfau a Rhagenwau (Verbs & Pronouns)",
+                    "Patrymau Iaith (Sentence Patterns & Word Order)",
+                    "Ymarfer Siarad (Conversational Confidence)"
+                ]
             };
 
-            if (submitted) {
-                return (
-                    <div className="bg-slate-800 p-8 rounded-2xl border border-emerald-500/30 text-center space-y-4 shadow-2xl">
-                        <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
-                        <h2 className="text-xl font-bold text-white">Diolch! Response Submitted!</h2>
-                        <p className="text-sm text-slate-400">Your feedback has been sent to your teacher's dashboard.</p>
-                        <button 
-                            onClick={() => setSubmitted(false)}
-                            className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded-xl transition">
-                            Submit Another Response
-                        </button>
-                    </div>
-                );
-            }
+            document.getElementById('poll-topic').innerText = savedPoll.topicTitle;
+            document.getElementById('poll-subject').innerText = savedPoll.subject;
 
-            return (
-                <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
-                    <div className="border-b border-slate-700 pb-4">
-                        <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dysgu Cymraeg</span>
-                        <h1 className="text-xl font-bold text-white mt-2">Tocyn Allan / Student Exit Ticket</h1>
-                        <p className="text-xs text-slate-400">Share your understanding and lesson feedback below.</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-300 mb-1">Eich Enw / Your Name:</label>
-                            <input 
-                                type="text" 
-                                required
-                                placeholder="e.g. Mali Evans"
-                                value={studentName}
-                                onChange={(e) => setStudentName(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500" />
-                        </div>
-
-                        {/* Section A */}
-                        <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
-                            <h2 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section A: Dealltwriaeth / Understanding</h2>
-                            
-                            <div>
-                                <label className="block text-xs text-slate-300 mb-2">How confident do you feel about today's topic? (1-5)</label>
-                                <div className="flex gap-2">
-                                    {[1, 2, 3, 4, 5].map(num => (
-                                        <button
-                                            key={num}
-                                            type="button"
-                                            onClick={() => setConfidence(num)}
-                                            className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition ${confidence === num ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                                            {num}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs text-slate-300 mb-1">Which part felt most difficult today?</label>
-                                <select 
-                                    value={difficultConcept}
-                                    onChange={(e) => setDifficultConcept(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    {DEFAULT_CONCEPTS.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs text-slate-300 mb-1">Could you explain the main rule to another learner?</label>
-                                <div className="flex gap-2">
-                                    {['Yes', 'Almost', 'Not yet'].map(opt => (
-                                        <button
-                                            key={opt}
-                                            type="button"
-                                            onClick={() => setCanExplain(opt)}
-                                            className={`flex-1 py-2 rounded-xl font-semibold text-xs border ${canExplain === opt ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                                            {opt}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section B */}
-                        <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
-                            <h2 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section B: Profiad Dysgu / Learning Experience</h2>
-                            {[
-                                { key: 'clarity', label: 'The explanations were clear.' },
-                                { key: 'examples', label: 'The examples helped me understand.' },
-                                { key: 'pace', label: 'The pace felt right.' },
-                                { key: 'practice', label: 'I had enough practice time.' },
-                                { key: 'nextSteps', label: 'I left knowing what to do next.' }
-                            ].map(item => (
-                                <div key={item.key} className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-300 max-w-[200px]">{item.label}</span>
-                                    <div className="flex gap-1">
-                                        {[1, 2, 3, 4, 5].map(score => (
-                                            <button
-                                                key={score}
-                                                type="button"
-                                                onClick={() => setFeedback({ ...feedback, [item.key]: score })}
-                                                className={`w-6 h-6 rounded text-[10px] font-bold border ${feedback[item.key] === score ? 'bg-slate-200 text-slate-900 border-white' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
-                                                {score}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/30">
-                            Cyflwyno / Submit Exit Ticket
-                        </button>
-                    </form>
-                </div>
-            );
+            const conceptSelect = document.getElementById('difficultConcept');
+            conceptSelect.innerHTML = '';
+            savedPoll.concepts.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                conceptSelect.appendChild(opt);
+            });
         }
 
-        ReactDOM.render(<StudentPortal />, document.getElementById('root'));
+        // Button Click Handlers
+        document.querySelectorAll('.conf-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.conf-btn').forEach(b => {
+                    b.className = 'conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-slate-900 border-slate-700 text-slate-400';
+                });
+                e.target.className = 'conf-btn flex-1 py-2.5 rounded-xl font-bold text-sm border bg-emerald-600 border-emerald-500 text-white shadow-lg';
+                selectedConfidence = e.target.getAttribute('data-val');
+            });
+        });
+
+        document.querySelectorAll('.explain-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.explain-btn').forEach(b => {
+                    b.className = 'explain-btn flex-1 py-2 rounded-xl font-semibold text-xs border bg-slate-900 border-slate-700 text-slate-400';
+                });
+                e.target.className = 'explain-btn flex-1 py-2 rounded-xl font-semibold text-xs border bg-emerald-600 border-emerald-500 text-white';
+                selectedExplain = e.target.getAttribute('data-val');
+            });
+        });
+
+        // Form Submit
+        document.getElementById('ticket-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const studentName = document.getElementById('studentName').value;
+            const difficultConcept = document.getElementById('difficultConcept').value;
+
+            const newSub = {
+                id: 'sub-' + Date.now(),
+                studentName,
+                confidence: selectedConfidence,
+                difficultConcept,
+                canExplain: selectedExplain,
+                timestamp: new Date().toISOString()
+            };
+
+            const existing = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
+            localStorage.setItem('welsh_et_submissions', JSON.stringify([newSub, ...existing]));
+
+            document.getElementById('form-container').classList.add('hidden');
+            document.getElementById('success-container').classList.remove('hidden');
+        });
+
+        function resetForm() {
+            document.getElementById('studentName').value = '';
+            document.getElementById('form-container').classList.remove('hidden');
+            document.getElementById('success-container').classList.add('hidden');
+        }
+
+        loadPoll();
     </script>
 </body>
 </html>
