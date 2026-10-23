@@ -3,650 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ystafell Ddosbarth Cymraeg - Teacher Workspace & Exit Ticket</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Cymraeg Pulse - Welsh Language Teacher Workspace & Exit Ticket</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM CDNs -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel Standalone for in-browser JSX compilation -->
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Recharts CDN -->
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
+        const { 
+            BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell 
+        } = window.Recharts || {};
 
-        // Default Welsh Language Curriculum Concepts
-        const DEFAULT_CONCEPTS = [
-            "Treigladau (Mutations)",
-            "Amser Gorffennol (Past Tense)",
-            "Patrymau Iaith (Sentence Patterns)",
-            "Berfau a Rhagenwau (Verbs & Pronouns)",
-            "Ymarfer Siarad (Conversational Practice)"
+        // Default Welsh Classes and Rosters
+        const INITIAL_WELSH_CLASSES = [
+          {
+            id: 'welsh-101',
+            name: 'Dosbarth Blwyddyn 8 - Cymraeg Ail Iaith',
+            subject: 'Welsh Second Language',
+            grade: 'Year 8',
+            concepts: [
+              'Treigladau (Mutations - Soft, Nasal, Aspirate)',
+              'Amser Gorffennol (Past Tense - Ga i, Mi wnes i)',
+              'Berfau a Rhagenwau (Verbs & Pronouns)',
+              'Patrymau Iaith (Sentence Patterns & Word Order)',
+              'Ymarfer Siarad (Conversational Confidence)'
+            ],
+            students: [
+              { id: 'st-1', name: 'Mali Evans', avatar: 'ME' },
+              { id: 'st-2', name: 'Rhys Davies', avatar: 'RD' },
+              { id: 'st-3', name: 'Sian Hughes', avatar: 'SH' },
+              { id: 'st-4', name: 'Tomos Griffiths', avatar: 'TG' },
+              { id: 'st-5', name: 'Carys Owen', avatar: 'CO' },
+              { id: 'st-6', name: 'Dylan Williams', avatar: 'DW' },
+              { id: 'st-7', name: 'Eira Thomas', avatar: 'ET' },
+              { id: 'st-8', name: 'Iwan Roberts', avatar: 'IR' }
+            ]
+          },
+          {
+            id: 'welsh-102',
+            name: 'Year 10 GCSE Welsh - Foundation',
+            subject: 'Welsh Language',
+            grade: 'Year 10',
+            concepts: [
+              'Hoffi / Ddim yn hoffi Expressions',
+              'Treiglad Meddal (Soft Mutation Rules)',
+              'Ateb Cwestiynau (Answering Questions)',
+              'Geirfa Gorffennaf (Holiday Vocabulary)'
+            ],
+            students: [
+              { id: 'st-201', name: 'Megan Jones', avatar: 'MJ' },
+              { id: 'st-202', name: 'Jack Morgan', avatar: 'JM' },
+              { id: 'st-203', name: 'Ffion Lewis', avatar: 'FL' }
+            ]
+          }
         ];
 
-        const DEFAULT_STUDENTS = [
-            { id: "S1", name: "Elinor Davies", classId: "C1" },
-            { id: "S2", name: "Gethin Jones", classId: "C1" },
-            { id: "S3", name: "Megan Rees", classId: "C1" },
-            { id: "S4", name: "Iwan Thomas", classId: "C1" },
-            { id: "S5", name: "Ceri Evans", classId: "C1" }
+        // Initial Exit Tickets
+        const INITIAL_TICKETS = [
+          {
+            id: 'ticket-w1',
+            classId: 'welsh-101',
+            title: 'Treigladau a’r Amser Gorffennol (Mutations & Past Tense)',
+            date: '2026-10-23',
+            active: true,
+            topic: 'Treiglad Meddal a Berfau (Soft Mutation & Verbs)',
+            targetConcepts: [
+              'Treigladau (Mutations - Soft, Nasal, Aspirate)',
+              'Amser Gorffennol (Past Tense - Ga i, Mi wnes i)',
+              'Berfau a Rhagenwau (Verbs & Pronouns)'
+            ]
+          }
         ];
 
-        const DEFAULT_CLASSES = [
-            { id: "C1", name: "Blwyddyn 10 - Cymraeg Ail Iaith (Year 10 Second Language)" }
+        // Initial Submissions
+        const INITIAL_SUBMISSIONS = [
+          {
+            id: 'sub-w1',
+            ticketId: 'ticket-w1',
+            studentId: 'st-1',
+            studentName: 'Mali Evans',
+            timestamp: '2026-10-23T10:15:00Z',
+            confidence: 5,
+            difficultConcept: 'Treigladau (Mutations - Soft, Nasal, Aspirate)',
+            difficultyReflection: 'Knowing when "p, t, c" change to "b, d, g" in spoken Welsh.',
+            canExplain: 'Yes',
+            explanationText: 'To form the past tense with "Mi wnes i", the following verb takes a soft mutation!',
+            clarity: 5, examples: 5, pace: 4, practice: 5, nextSteps: 5
+          },
+          {
+            id: 'sub-w2',
+            ticketId: 'ticket-w1',
+            studentId: 'st-2',
+            studentName: 'Rhys Davies',
+            timestamp: '2026-10-23T10:16:00Z',
+            confidence: 2,
+            difficultConcept: 'Treigladau (Mutations - Soft, Nasal, Aspirate)',
+            difficultyReflection: 'I get confused between soft mutation and nasal mutation after "yn".',
+            canExplain: 'Not yet',
+            explanationText: 'I know words change letters at the start, but I forget the exact letter pairs.',
+            clarity: 3, examples: 3, pace: 2, practice: 2, nextSteps: 3
+          },
+          {
+            id: 'sub-w3',
+            ticketId: 'ticket-w1',
+            studentId: 'st-3',
+            studentName: 'Sian Hughes',
+            timestamp: '2026-10-23T10:18:00Z',
+            confidence: 1,
+            difficultConcept: 'Amser Gorffennol (Past Tense - Ga i, Mi wnes i)',
+            difficultyReflection: 'Difference between "wnes i" and "roeddwn i".',
+            canExplain: 'Not yet',
+            explanationText: 'I am not sure how to conjugate the past tense verbs correctly without checking notes.',
+            clarity: 2, examples: 2, pace: 1, practice: 2, nextSteps: 2
+          },
+          {
+            id: 'sub-w4',
+            ticketId: 'ticket-w1',
+            studentId: 'st-4',
+            studentName: 'Tomos Griffiths',
+            timestamp: '2026-10-23T10:20:00Z',
+            confidence: 4,
+            difficultConcept: 'Berfau a Rhagenwau (Verbs & Pronouns)',
+            difficultyReflection: 'Remembering all pronoun endings.',
+            canExplain: 'Yes',
+            explanationText: 'Sentence structure always starts with the verb in Welsh, unlike English!',
+            clarity: 5, examples: 4, pace: 4, practice: 4, nextSteps: 5
+          }
         ];
 
         function App() {
-            // State
-            const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, ticket, student-view, admin
-            const [dashSubTab, setDashSubTab] = useState("understanding"); // understanding, feedback, learner
-            
-            const [classes, setClasses] = useState(() => {
-                const saved = localStorage.getItem('wt_classes');
-                return saved ? JSON.parse(saved) : DEFAULT_CLASSES;
-            });
+          const [classes, setClasses] = useState(() => {
+            const saved = localStorage.getItem('welsh_et_classes');
+            return saved ? JSON.parse(saved) : INITIAL_WELSH_CLASSES;
+          });
 
-            const [selectedClassId, setSelectedClassId] = useState(DEFAULT_CLASSES[0].id);
+          const [tickets, setTickets] = useState(() => {
+            const saved = localStorage.getItem('welsh_et_tickets');
+            return saved ? JSON.parse(saved) : INITIAL_TICKETS;
+          });
 
-            const [students, setStudents] = useState(() => {
-                const saved = localStorage.getItem('wt_students');
-                return saved ? JSON.parse(saved) : DEFAULT_STUDENTS;
-            });
+          const [submissions, setSubmissions] = useState(() => {
+            const saved = localStorage.getItem('welsh_et_submissions');
+            return saved ? JSON.parse(saved) : INITIAL_SUBMISSIONS;
+          });
 
-            const [concepts, setConcepts] = useState(() => {
-                const saved = localStorage.getItem('wt_concepts');
-                return saved ? JSON.parse(saved) : DEFAULT_CONCEPTS;
-            });
+          const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '');
+          const [activeTab, setActiveTab] = useState('dashboard');
+          const [dashSubTab, setDashSubTab] = useState('understanding');
+          const [selectedStudentId, setSelectedStudentId] = useState(classes[0]?.students[0]?.id || '');
 
-            const [submissions, setSubmissions] = useState(() => {
-                const saved = localStorage.getItem('wt_submissions');
-                return saved ? JSON.parse(saved) : [
-                    { id: "sub-1", studentId: "S1", studentName: "Elinor Davies", classId: "C1", confidence: 4, difficultConcept: "Treigladau (Mutations)", explainable: "Yes", feedback: { clarity: 5, examples: 4, pace: 4, practice: 5, nextSteps: 5 }, date: "Heddiw / Today" },
-                    { id: "sub-2", studentId: "S2", studentName: "Gethin Jones", classId: "C1", confidence: 2, difficultConcept: "Amser Gorffennol (Past Tense)", explainable: "No", feedback: { clarity: 3, examples: 3, pace: 2, practice: 3, nextSteps: 2 }, date: "Heddiw / Today" },
-                    { id: "sub-3", studentId: "S3", studentName: "Megan Rees", classId: "C1", confidence: 5, difficultConcept: "Ymarfer Siarad (Conversational Practice)", explainable: "Yes", feedback: { clarity: 5, examples: 5, pace: 5, practice: 5, nextSteps: 5 }, date: "Heddiw / Today" },
-                    { id: "sub-4", studentId: "S4", studentName: "Iwan Thomas", classId: "C1", confidence: 3, difficultConcept: "Berfau a Rhagenwau (Verbs & Pronouns)", explainable: "Maybe", feedback: { clarity: 4, examples: 3, pace: 3, practice: 4, nextSteps: 3 }, date: "Heddiw / Today" },
-                    { id: "sub-5", studentId: "S5", studentName: "Ceri Evans", classId: "C1", confidence: 2, difficultConcept: "Treigladau (Mutations)", explainable: "No", feedback: { clarity: 2, examples: 2, pace: 2, practice: 2, nextSteps: 2 }, date: "Heddiw / Today" }
-                ];
-            });
+          const [showQRModal, setShowQRModal] = useState(false);
+          const [showNewClassModal, setShowNewClassModal] = useState(false);
+          const [showNewTicketModal, setShowNewTicketModal] = useState(false);
+          const [copiedLink, setCopiedLink] = useState(false);
 
-            // Student portal state
-            const [selectedStudentForPortal, setSelectedStudentForPortal] = useState(DEFAULT_STUDENTS[0].id);
-            const [ticketConf, setTicketConf] = useState(4);
-            const [ticketDiff, setTicketDiff] = useState(DEFAULT_CONCEPTS[0]);
-            const [ticketExplain, setTicketExplain] = useState("Yes");
-            const [ticketFb, setTicketFb] = useState({ clarity: 4, examples: 4, pace: 4, practice: 4, nextSteps: 4 });
-            const [submittedSuccess, setSubmittedSuccess] = useState(false);
+          const [newClassName, setNewClassName] = useState('');
+          const [newClassSubject, setNewClassSubject] = useState('');
+          const [newClassGrade, setNewClassGrade] = useState('');
+          const [bulkStudentNames, setBulkStudentNames] = useState('');
+          const [newConceptInput, setNewConceptInput] = useState('');
 
-            // Admin input states
-            const [newClassName, setNewClassName] = useState("");
-            const [newStudentName, setNewStudentName] = useState("");
-            const [newConceptName, setNewConceptName] = useState("");
-            const [bulkStudentText, setBulkStudentText] = useState("");
+          const [newTicketTitle, setNewTicketTitle] = useState('');
+          const [newTicketTopic, setNewTicketTopic] = useState('');
 
-            useEffect(() => {
-                localStorage.setItem('wt_classes', JSON.stringify(classes));
-                localStorage.setItem('wt_students', JSON.stringify(students));
-                localStorage.setItem('wt_concepts', JSON.stringify(concepts));
-                localStorage.setItem('wt_submissions', JSON.stringify(submissions));
-            }, [classes, students, concepts, submissions]);
+          const [activeStudentId, setActiveStudentId] = useState('');
+          const [studentForm, setStudentForm] = useState({
+            confidence: 3,
+            difficultConcept: '',
+            difficultyReflection: '',
+            canExplain: 'Almost',
+            explanationText: '',
+            clarity: 4, examples: 4, pace: 4, practice: 4, nextSteps: 4
+          });
+          const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-            // Helper to simulate submissions
-            const handleSimulate = () => {
-                const classStudents = students.filter(s => s.classId === selectedClassId);
-                if (classStudents.length === 0) return;
-                
-                const newSubs = classStudents.map((st, idx) => ({
-                    id: `sim-${Date.now()}-${idx}`,
-                    studentId: st.id,
-                    studentName: st.name,
-                    classId: selectedClassId,
-                    confidence: Math.floor(Math.random() * 3) + 2, // 2-5
-                    difficultConcept: concepts[Math.floor(Math.random() * concepts.length)],
-                    explainable: Math.random() > 0.4 ? "Yes" : "No",
-                    feedback: {
-                        clarity: Math.floor(Math.random() * 2) + 4,
-                        examples: Math.floor(Math.random() * 2) + 4,
-                        pace: Math.floor(Math.random() * 2) + 3,
-                        practice: Math.floor(Math.random() * 2) + 4,
-                        nextSteps: Math.floor(Math.random() * 2) + 4
-                    },
-                    date: new Date().toLocaleDateString()
-                }));
-                setSubmissions([...newSubs, ...submissions.filter(s => s.classId !== selectedClassId)]);
+          useEffect(() => {
+            localStorage.setItem('welsh_et_classes', JSON.stringify(classes));
+            localStorage.setItem('welsh_et_tickets', JSON.stringify(tickets));
+            localStorage.setItem('welsh_et_submissions', JSON.stringify(submissions));
+          }, [classes, tickets, submissions]);
+
+          const currentClass = useMemo(() => classes.find(c => c.id === selectedClassId) || classes[0] || null, [classes, selectedClassId]);
+          const activeTicket = useMemo(() => tickets.find(t => t.classId === selectedClassId && t.active) || tickets.find(t => t.classId === selectedClassId) || null, [tickets, selectedClassId]);
+          const currentSubmissions = useMemo(() => activeTicket ? submissions.filter(s => s.ticketId === activeTicket.id) : [], [submissions, activeTicket]);
+
+          useEffect(() => {
+            if (currentClass && currentClass.students.length > 0) {
+              if (!currentClass.students.some(s => s.id === selectedStudentId)) {
+                setSelectedStudentId(currentClass.students[0].id);
+              }
+              if (!activeStudentId) {
+                setActiveStudentId(currentClass.students[0].id);
+              }
+            }
+          }, [selectedClassId, currentClass]);
+
+          const handleCreateClass = (e) => {
+            e.preventDefault();
+            if (!newClassName.trim()) return;
+
+            const studentList = bulkStudentNames.split('\n').map(s => s.trim()).filter(s => s.length > 0).map((name, index) => ({
+              id: `st-${Date.now()}-${index}`,
+              name,
+              avatar: name.split(' ').map(n => n[0]).join('').toUpperCase()
+            }));
+
+            const newClass = {
+              id: `class-${Date.now()}`,
+              name: newClassName,
+              subject: newClassSubject || 'Cymraeg / Welsh',
+              grade: newClassGrade || 'All Years',
+              concepts: ['Treigladau (Mutations)', 'Amser Gorffennol (Past Tense)', 'Patrymau Iaith (Sentence Patterns)'],
+              students: studentList.length > 0 ? studentList : [{ id: `st-${Date.now()}-1`, name: 'Aled Hughes', avatar: 'AH' }]
             };
 
-            const handleStudentSubmit = (e) => {
-                e.preventDefault();
-                const studentObj = students.find(s => s.id === selectedStudentForPortal);
-                if (!studentObj) return;
+            setClasses([...classes, newClass]);
+            setSelectedClassId(newClass.id);
+            setNewClassName(''); setNewClassSubject(''); setNewClassGrade(''); setBulkStudentNames('');
+            setShowNewClassModal(false);
+          };
 
-                const sub = {
-                    id: `sub-${Date.now()}`,
-                    studentId: studentObj.id,
-                    studentName: studentObj.name,
-                    classId: selectedClassId,
-                    confidence: Number(ticketConf),
-                    difficultConcept: ticketDiff,
-                    explainable: ticketExplain,
-                    feedback: ticketFb,
-                    date: new Date().toLocaleDateString()
-                };
+          const handleAddConcept = () => {
+            if (!newConceptInput.trim() || !currentClass) return;
+            setClasses(classes.map(c => c.id === currentClass.id ? { ...c, concepts: [...(c.concepts || []), newConceptInput.trim()] } : c));
+            setNewConceptInput('');
+          };
 
-                setSubmissions([sub, ...submissions.filter(s => s.studentId !== studentObj.id)]);
-                setSubmittedSuccess(true);
+          const handleRemoveConcept = (conceptToRemove) => {
+            setClasses(classes.map(c => c.id === currentClass.id ? { ...c, concepts: c.concepts.filter(item => item !== conceptToRemove) } : c));
+          };
+
+          const handleCreateTicket = (e) => {
+            e.preventDefault();
+            if (!newTicketTitle.trim() || !currentClass) return;
+            const updatedTickets = tickets.map(t => t.classId === currentClass.id ? { ...t, active: false } : t);
+            const newTicket = {
+              id: `ticket-${Date.now()}`,
+              classId: currentClass.id,
+              title: newTicketTitle,
+              topic: newTicketTopic || 'Gramadeg a Geirfa',
+              date: new Date().toISOString().split('T')[0],
+              active: true,
+              targetConcepts: currentClass.concepts || []
             };
+            setTickets([newTicket, ...updatedTickets]);
+            setNewTicketTitle(''); setNewTicketTopic(''); setShowNewTicketModal(false);
+          };
 
-            // Selected class filtering
-            const currentClass = classes.find(c => c.id === selectedClassId) || classes[0];
-            const currentClassStudents = students.filter(s => s.classId === selectedClassId);
-            const currentClassSubs = submissions.filter(s => s.classId === selectedClassId);
+          const handleSimulateSubmissions = () => {
+            if (!activeTicket || !currentClass) return;
+            const difficultPool = [...(currentClass.concepts || ['Treigladau']), 'None / All clear'];
+            const explainOptions = ['Yes', 'Almost', 'Not yet'];
 
-            // Metrics calculations
-            const avgConfidence = currentClassSubs.length > 0 
-                ? (currentClassSubs.reduce((acc, curr) => acc + curr.confidence, 0) / currentClassSubs.length).toFixed(1) 
-                : 0;
+            const simulated = currentClass.students.map(student => {
+              const conf = Math.floor(Math.random() * 5) + 1;
+              const concept = difficultPool[Math.floor(Math.random() * difficultPool.length)];
+              const exp = explainOptions[Math.floor(Math.random() * explainOptions.length)];
 
-            const needsSupportList = currentClassSubs.filter(s => s.confidence <= 2 || s.explainable === "No");
-
-            // Concept breakdown counts
-            const conceptCounts = {};
-            concepts.forEach(c => conceptCounts[c] = 0);
-            currentClassSubs.forEach(s => {
-                if (conceptCounts[s.difficultConcept] !== undefined) {
-                    conceptCounts[s.difficultConcept] += 1;
-                }
+              return {
+                id: `sim-${Date.now()}-${student.id}`,
+                ticketId: activeTicket.id,
+                studentId: student.id,
+                studentName: student.name,
+                timestamp: new Date().toISOString(),
+                confidence: conf,
+                difficultConcept: concept,
+                difficultyReflection: conf < 3 ? `Struggling with ${concept} rule.` : `Felt confident on ${concept}.`,
+                canExplain: exp,
+                explanationText: exp === 'Yes' ? 'Verb comes first in Welsh sentence structure.' : 'Soft mutations alter initial consonant letters.',
+                clarity: Math.floor(Math.random() * 2) + 4,
+                examples: Math.floor(Math.random() * 3) + 3,
+                pace: Math.floor(Math.random() * 3) + 3,
+                practice: Math.floor(Math.random() * 3) + 3,
+                nextSteps: Math.floor(Math.random() * 2) + 4
+              };
             });
 
-            // Feedback averages
-            const fbAverages = {
-                clarity: currentClassSubs.length ? (currentClassSubs.reduce((a,b) => a + b.feedback.clarity, 0) / currentClassSubs.length).toFixed(1) : 0,
-                examples: currentClassSubs.length ? (currentClassSubs.reduce((a,b) => a + b.feedback.examples, 0) / currentClassSubs.length).toFixed(1) : 0,
-                pace: currentClassSubs.length ? (currentClassSubs.reduce((a,b) => a + b.feedback.pace, 0) / currentClassSubs.length).toFixed(1) : 0,
-                practice: currentClassSubs.length ? (currentClassSubs.reduce((a,b) => a + b.feedback.practice, 0) / currentClassSubs.length).toFixed(1) : 0,
-                nextSteps: currentClassSubs.length ? (currentClassSubs.reduce((a,b) => a + b.feedback.nextSteps, 0) / currentClassSubs.length).toFixed(1) : 0,
+            setSubmissions([...simulated, ...submissions.filter(s => s.ticketId !== activeTicket.id)]);
+          };
+
+          const handleStudentSubmit = (e) => {
+            e.preventDefault();
+            if (!activeTicket || !activeStudentId) return;
+
+            const studentObj = currentClass?.students.find(s => s.id === activeStudentId);
+            const newSub = {
+              id: `sub-${Date.now()}`,
+              ticketId: activeTicket.id,
+              studentId: activeStudentId,
+              studentName: studentObj ? studentObj.name : 'Anonymous',
+              timestamp: new Date().toISOString(),
+              ...studentForm
             };
 
-            return (
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    {/* Header Bar */}
-                    <header className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="bg-red-600 text-white font-bold text-xs px-2.5 py-1 rounded-full">CYMRAEG</span>
-                                <h1 className="text-xl font-bold text-slate-800">Ystafell Ddosbarth / Teacher Workspace</h1>
-                            </div>
-                            <p className="text-sm text-slate-500 mt-0.5">Exit Ticket & Analytics Dashboard (Dysgu Cymraeg)</p>
-                        </div>
+            setSubmissions([newSub, ...submissions.filter(s => !(s.ticketId === activeTicket.id && s.studentId === activeStudentId))]);
+            setSubmittedSuccess(true);
+            setTimeout(() => setSubmittedSuccess(false), 4000);
+          };
 
-                        <div className="flex flex-wrap items-center gap-3">
-                            <select 
-                                value={selectedClassId} 
-                                onChange={(e) => setSelectedClassId(e.target.value)}
-                                className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                {classes.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
+          const analytics = useMemo(() => {
+            if (!currentSubmissions.length) {
+              return { avgConfidence: 0, needsSupport: [], conceptCounts: {}, feedbackAverages: { clarity: 0, examples: 0, pace: 0, practice: 0, nextSteps: 0 }, explainStats: { Yes: 0, Almost: 0, 'Not yet': 0 } };
+            }
+            const total = currentSubmissions.length;
+            const avgConf = (currentSubmissions.reduce((acc, s) => acc + (s.confidence || 0), 0) / total).toFixed(1);
+            const flagged = currentSubmissions.filter(s => s.confidence <= 2 || s.canExplain === 'Not yet');
 
-                            <button 
-                                onClick={handleSimulate}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition shadow-sm">
-                                ⚡ Simulate Responses
-                            </button>
-                        </div>
-                    </header>
+            const concepts = {};
+            currentSubmissions.forEach(s => {
+              if (s.difficultConcept && s.difficultConcept !== 'None / All clear') {
+                concepts[s.difficultConcept] = (concepts[s.difficultConcept] || 0) + 1;
+              }
+            });
 
-                    {/* Navigation Tabs */}
-                    <nav className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3">
-                        <button 
-                            onClick={() => setActiveTab("dashboard")}
-                            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition ${activeTab === "dashboard" ? "bg-red-600 text-white shadow" : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"}`}>
-                            📊 Teacher Dashboard
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("ticket")}
-                            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition ${activeTab === "ticket" ? "bg-red-600 text-white shadow" : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"}`}>
-                            📝 Exit Ticket & Student Portal
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("admin")}
-                            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition ${activeTab === "admin" ? "bg-slate-800 text-white shadow" : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"}`}>
-                            ⚙️ Admin & Setup Hub
-                        </button>
-                    </nav>
+            const feedback = {
+              clarity: +(currentSubmissions.reduce((a, b) => a + (b.clarity || 0), 0) / total).toFixed(1),
+              examples: +(currentSubmissions.reduce((a, b) => a + (b.examples || 0), 0) / total).toFixed(1),
+              pace: +(currentSubmissions.reduce((a, b) => a + (b.pace || 0), 0) / total).toFixed(1),
+              practice: +(currentSubmissions.reduce((a, b) => a + (b.practice || 0), 0) / total).toFixed(1),
+              nextSteps: +(currentSubmissions.reduce((a, b) => a + (b.nextSteps || 0), 0) / total).toFixed(1)
+            };
 
-                    {/* TAB 1: TEACHER DASHBOARD */}
-                    {activeTab === "dashboard" && (
-                        <div className="space-y-6">
-                            {/* Dashboard Sub-tabs */}
-                            <div className="flex gap-2 bg-slate-200 p-1 rounded-xl w-fit">
-                                <button 
-                                    onClick={() => setDashSubTab("understanding")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${dashSubTab === "understanding" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>
-                                    1. Class Understanding / Dealltwriaeth
-                                </button>
-                                <button 
-                                    onClick={() => setDashSubTab("feedback")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${dashSubTab === "feedback" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>
-                                    2. Lesson Feedback / Adborth
-                                </button>
-                                <button 
-                                    onClick={() => setDashSubTab("learner")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${dashSubTab === "learner" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>
-                                    3. Learner View / Golwg Dysgwr
-                                </button>
-                            </div>
+            const explain = { Yes: 0, Almost: 0, 'Not yet': 0 };
+            currentSubmissions.forEach(s => { if (s.canExplain) explain[s.canExplain] = (explain[s.canExplain] || 0) + 1; });
 
-                            {/* Sub-Tab 1: Class Understanding */}
-                            {dashSubTab === "understanding" && (
-                                <div className="space-y-6">
-                                    {/* Summary Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Average Confidence (1-5)</p>
-                                            <p className="text-3xl font-extrabold text-slate-800 mt-2">{avgConfidence} <span className="text-sm font-normal text-slate-500">/ 5.0</span></p>
-                                            <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
-                                                <div className="bg-red-600 h-full rounded-full" style={{ width: `${(avgConfidence / 5) * 100}%` }}></div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Submissions</p>
-                                            <p className="text-3xl font-extrabold text-slate-800 mt-2">{currentClassSubs.length} <span className="text-sm font-normal text-slate-500">/ {currentClassStudents.length} students</span></p>
-                                            <p className="text-xs text-emerald-600 font-medium mt-3">✓ Active response rate recorded</p>
-                                        </div>
-                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Flagged For Support</p>
-                                            <p className="text-3xl font-extrabold text-amber-600 mt-2">{needsSupportList.length} <span className="text-sm font-normal text-slate-500">learners</span></p>
-                                            <p className="text-xs text-slate-500 mt-3">Confidence ≤ 2 or struggle reported</p>
-                                        </div>
-                                    </div>
+            return { avgConfidence: avgConf, needsSupport: flagged, conceptCounts: concepts, feedbackAverages: feedback, explainStats: explain };
+          }, [currentSubmissions]);
 
-                                    {/* Concept Map & Misconceptions */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                            <h3 className="font-bold text-slate-800 text-base mb-4">🗺️ Concept Map Difficulty Heatmap</h3>
-                                            <div className="space-y-3">
-                                                {concepts.map(concept => {
-                                                    const count = conceptCounts[concept] || 0;
-                                                    const maxCount = Math.max(...Object.values(conceptCounts), 1);
-                                                    const percentage = (count / maxCount) * 100;
-                                                    return (
-                                                        <div key={concept} className="space-y-1">
-                                                            <div className="flex justify-between text-sm">
-                                                                <span className="font-medium text-slate-700">{concept}</span>
-                                                                <span className="text-slate-500 font-semibold">{count} struggles</span>
-                                                            </div>
-                                                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                                                <div className="bg-red-500 h-full rounded-full transition-all" style={{ width: `${percentage}%` }}></div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
+          const selectedStudentData = useMemo(() => {
+            if (!selectedStudentId) return null;
+            const studentObj = currentClass?.students.find(s => s.id === selectedStudentId);
+            const studentSubs = submissions.filter(s => s.studentId === selectedStudentId);
 
-                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="font-bold text-slate-800 text-base mb-4">⚠️ Needs Support Priority Roster</h3>
-                                                {needsSupportList.length === 0 ? (
-                                                    <p className="text-sm text-slate-500 italic py-8 text-center">No students currently flagged for immediate support.</p>
-                                                ) : (
-                                                    <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                                                        {needsSupportList.map(item => (
-                                                            <div key={item.id} className="p-3 bg-red-50 border border-red-100 rounded-xl flex justify-between items-center">
-                                                                <div>
-                                                                    <p className="font-bold text-slate-800 text-sm">{item.studentName}</p>
-                                                                    <p className="text-xs text-red-600 mt-0.5">Difficult concept: {item.difficultConcept}</p>
-                                                                </div>
-                                                                <span className="bg-red-200 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">Conf: {item.confidence}/5</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-slate-400 mt-4">* Students reporting low confidence or unable to explain main concepts.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+            const conceptHardships = {};
+            studentSubs.forEach(s => {
+              if (s.difficultConcept && s.difficultConcept !== 'None / All clear') {
+                conceptHardships[s.difficultConcept] = (conceptHardships[s.difficultConcept] || 0) + 1;
+              }
+            });
 
-                            {/* Sub-Tab 2: Lesson Feedback */}
-                            {dashSubTab === "feedback" && (
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 text-lg">📈 Lesson Feedback Averages (Layer 1 - Section B)</h3>
-                                        <p className="text-sm text-slate-500">Aggregated feedback metrics across recent Welsh language sessions.</p>
-                                    </div>
+            const progressionChartData = studentSubs.map(s => {
+              const ticket = tickets.find(t => t.id === s.ticketId);
+              return { date: ticket ? ticket.date : 'Recent', confidence: s.confidence, clarity: s.clarity };
+            }).reverse();
 
-                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                            <p className="text-xs text-slate-500 font-medium">Clarity / Eglur</p>
-                                            <p className="text-2xl font-bold text-slate-800 mt-1">{fbAverages.clarity} <span className="text-xs text-slate-400">/ 5</span></p>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                            <p className="text-xs text-slate-500 font-medium">Examples / Enghreifftiau</p>
-                                            <p className="text-2xl font-bold text-slate-800 mt-1">{fbAverages.examples} <span className="text-xs text-slate-400">/ 5</span></p>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                            <p className="text-xs text-slate-500 font-medium">Pace / Cyflymder</p>
-                                            <p className="text-2xl font-bold text-slate-800 mt-1">{fbAverages.pace} <span className="text-xs text-slate-400">/ 5</span></p>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                            <p className="text-xs text-slate-500 font-medium">Practice / Ymarfer</p>
-                                            <p className="text-2xl font-bold text-slate-800 mt-1">{fbAverages.practice} <span className="text-xs text-slate-400">/ 5</span></p>
-                                        </div>
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                                            <p className="text-xs text-slate-500 font-medium">Next Steps / Camau Nesaf</p>
-                                            <p className="text-2xl font-bold text-slate-800 mt-1">{fbAverages.nextSteps} <span className="text-xs text-slate-400">/ 5</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+            const avgConf = studentSubs.length ? (studentSubs.reduce((a, b) => a + b.confidence, 0) / studentSubs.length).toFixed(1) : 'N/A';
 
-                            {/* Sub-Tab 3: Learner View */}
-                            {dashSubTab === "learner" && (
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                        <div>
-                                            <h3 className="font-bold text-slate-800 text-lg">👤 Individual Learner Profile</h3>
-                                            <p className="text-sm text-slate-500">Select a student to view their confidence profile and concept history.</p>
-                                        </div>
-                                        <select 
-                                            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                            onChange={(e) => {
-                                                const stId = e.target.value;
-                                                // handle student selection for view
-                                            }}>
-                                            {currentClassStudents.map(s => (
-                                                <option key={s.id} value={s.id}>{s.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+            return { info: studentObj, submissions: studentSubs, conceptHardships, progressionChartData, avgConfidence: avgConf };
+          }, [selectedStudentId, currentClass, submissions, tickets]);
 
-                                    <div className="border-t border-slate-200 pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {currentClassStudents.slice(0, 1).map(st => {
-                                            const studentSubs = submissions.filter(s => s.studentId === st.id);
-                                            const lastSub = studentSubs[0];
-                                            return (
-                                                <div key={st.id} className="md:col-span-3 bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between gap-6">
-                                                    <div>
-                                                        <h4 className="text-xl font-bold text-slate-800">{st.name}</h4>
-                                                        <p className="text-sm text-slate-500">Class: {currentClass.name}</p>
-                                                        <div className="mt-4 space-y-2">
-                                                            <p className="text-sm"><strong>Latest Confidence:</strong> {lastSub ? `${lastSub.confidence} / 5` : "No data yet"}</p>
-                                                            <p className="text-sm"><strong>Difficult Concept:</strong> {lastSub ? lastSub.difficultConcept : "N/A"}</p>
-                                                            <p className="text-sm"><strong>Can explain to peer?</strong> {lastSub ? lastSub.explainable : "N/A"}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 flex-1">
-                                                        <h5 className="font-bold text-sm text-slate-700 mb-2">Progression Over Time</h5>
-                                                        {studentSubs.length === 0 ? (
-                                                            <p className="text-xs text-slate-400 italic">No historical submissions recorded.</p>
-                                                        ) : (
-                                                            <div className="space-y-2">
-                                                                {studentSubs.map((sub, idx) => (
-                                                                    <div key={idx} className="flex justify-between items-center text-xs border-b border-slate-100 pb-1.5">
-                                                                        <span className="text-slate-500">{sub.date}</span>
-                                                                        <span className="font-semibold text-red-600">Confidence: {sub.confidence}/5</span>
-                                                                        <span className="text-slate-600 truncate max-w-[150px]">{sub.difficultConcept}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+          return (
+            <div className="min-h-screen flex flex-col font-sans">
+              {/* Header Bar */}
+              <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-30 px-4 py-3">
+                <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-emerald-600 p-2 rounded-xl shadow-lg flex items-center justify-center font-bold text-white">CYM</div>
+                    <div>
+                      <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Cymraeg Pulse</h1>
+                      <p className="text-xs text-slate-400">Welsh Language Teacher Workspace & Analytics</p>
+                    </div>
+                  </div>
 
-                    {/* TAB 2: EXIT TICKET & STUDENT PORTAL */}
-                    {activeTab === "ticket" && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Student Simulator Form */}
-                            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                <div className="flex justify-between items-center mb-6">
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 text-lg">📝 Exit Ticket / Tocyn Allan</h3>
-                                        <p className="text-sm text-slate-500">Layer 1 Form (Standard Exit Ticket for All Students)</p>
-                                    </div>
-                                    <select 
-                                        value={selectedStudentForPortal}
-                                        onChange={(e) => setSelectedStudentForPortal(e.target.value)}
-                                        className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700">
-                                        {currentClassStudents.map(s => (
-                                            <option key={s.id} value={s.id}>{s.name} (Simulated View)</option>
-                                        ))}
-                                    </select>
-                                </div>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedClassId}
+                      onChange={(e) => setSelectedClassId(e.target.value)}
+                      className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500">
+                      {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <button onClick={() => setShowNewClassModal(true)} className="p-1.5 bg-slate-800 text-emerald-400 rounded-lg border border-slate-700">+</button>
+                  </div>
 
-                                {submittedSuccess ? (
-                                    <div className="bg-emerald-50 border border-emerald-200 p-8 rounded-2xl text-center space-y-3">
-                                        <h4 className="text-lg font-bold text-emerald-800">Diolch! Response Submitted Successfully!</h4>
-                                        <p className="text-sm text-emerald-600">Your teacher can now view your feedback and confidence level on their dashboard.</p>
-                                        <button 
-                                            onClick={() => setSubmittedSuccess(false)}
-                                            className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                            Submit Another Response
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleStudentSubmit} className="space-y-6">
-                                        {/* Section A: Understanding */}
-                                        <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                            <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wider text-red-600">Section A: Dealltwriaeth / Understanding</h4>
-                                            
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">How confident do you feel about today's topic? (1 - 5)</label>
-                                                <div className="flex gap-3">
-                                                    {[1, 2, 3, 4, 5].map(num => (
-                                                        <button
-                                                            key={num}
-                                                            type="button"
-                                                            onClick={() => setTicketConf(num)}
-                                                            className={`flex-1 py-2 rounded-lg font-bold text-sm border transition ${ticketConf === num ? "bg-red-600 text-white border-red-600 shadow" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
-                                                            {num}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Which part felt most difficult? / Pa ran a oedd fwyaf anodd?</label>
-                                                <select 
-                                                    value={ticketDiff}
-                                                    onChange={(e) => setTicketDiff(e.target.value)}
-                                                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm text-slate-700">
-                                                    {concepts.map(c => (
-                                                        <option key={c} value={c}>{c}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Could you explain the main idea to another learner?</label>
-                                                <div className="flex gap-4">
-                                                    {["Yes", "Maybe", "No"].map(opt => (
-                                                        <label key={opt} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                                            <input 
-                                                                type="radio" 
-                                                                name="explainable" 
-                                                                value={opt} 
-                                                                checked={ticketExplain === opt}
-                                                                onChange={(e) => setTicketExplain(e.target.value)}
-                                                                className="text-red-600 focus:ring-red-500" />
-                                                            {opt}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Section B: Learning Experience */}
-                                        <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                            <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wider text-red-600">Section B: Profiad Dysgu / Learning Experience (1-5)</h4>
-                                            
-                                            {[
-                                                { key: 'clarity', label: 'The explanations were clear. / Roedd yr eglurhad yn glir.' },
-                                                { key: 'examples', label: 'The examples helped me understand. / Helpodd yr enghreifftiau fi.' },
-                                                { key: 'pace', label: 'The pace felt right. / Roedd y cyflymder yn iawn.' },
-                                                { key: 'practice', label: 'I had enough opportunity to practise. / Cefais ddigon o gyfle i ymarfer.' },
-                                                { key: 'nextSteps', label: 'I left knowing what I should do next. / Gwyddum beth i wneud nesaf.' }
-                                            ].map(item => (
-                                                <div key={item.key} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                                    <span className="text-sm text-slate-700">{item.label}</span>
-                                                    <div className="flex gap-1.5">
-                                                        {[1, 2, 3, 4, 5].map(score => (
-                                                            <button
-                                                                key={score}
-                                                                type="button"
-                                                                onClick={() => setTicketFb({...ticketFb, [item.key]: score})}
-                                                                className={`w-8 h-8 rounded-lg font-bold text-xs border ${ticketFb[item.key] === score ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
-                                                                {score}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <button 
-                                            type="submit"
-                                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow">
-                                            Cyflwyno Tocyn Allan / Submit Exit Ticket
-                                        </button>
-                                    </form>
-                                )}
-                            </div>
-
-                            {/* Share Link & QR Code Suite */}
-                            <div className="space-y-6">
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
-                                    <h3 className="font-bold text-slate-800 text-base">📱 Share Link & QR Code</h3>
-                                    <p className="text-xs text-slate-500">Display this QR code on your classroom projector or share the link with students.</p>
-                                    
-                                    <div className="bg-slate-100 p-6 rounded-xl border border-slate-200 flex justify-center items-center">
-                                        <div className="w-36 h-36 bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-                                            <svg className="w-28 h-28 text-slate-800" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm12-2h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z"/>
-                                            </svg>
-                                            <span className="text-[10px] text-slate-500 font-bold mt-1">SCAN ME</span>
-                                        </div>
-                                    </div>
-
-                                    <input 
-                                        type="text" 
-                                        readOnly 
-                                        value={window.location.href}
-                                        className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-600 text-center" />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* TAB 3: ADMIN & SETUP HUB */}
-                    {activeTab === "admin" && (
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-8">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-lg">⚙️ Admin Setup & Customization Hub</h3>
-                                <p className="text-sm text-slate-500">Configure your classes, student rosters, and custom Welsh language concepts.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Classes */}
-                                <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-slate-800 text-sm">1. Manage Classes</h4>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Class Name..." 
-                                            value={newClassName}
-                                            onChange={(e) => setNewClassName(e.target.value)}
-                                            className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-                                        <button 
-                                            onClick={() => {
-                                                if (!newClassName.trim()) return;
-                                                const newC = { id: `c-${Date.now()}`, name: newClassName };
-                                                setClasses([...classes, newC]);
-                                                setSelectedClassId(newC.id);
-                                                setNewClassName("");
-                                            }}
-                                            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium">Add</button>
-                                    </div>
-                                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                                        {classes.map(c => (
-                                            <div key={c.id} className="text-xs bg-white p-2.5 rounded-lg border border-slate-200 font-medium text-slate-700">
-                                                {c.name}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Students */}
-                                <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-slate-800 text-sm">2. Add Students</h4>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Student Name..." 
-                                            value={newStudentName}
-                                            onChange={(e) => setNewStudentName(e.target.value)}
-                                            className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-                                        <button 
-                                            onClick={() => {
-                                                if (!newStudentName.trim()) return;
-                                                const newSt = { id: `st-${Date.now()}`, name: newStudentName, classId: selectedClassId };
-                                                setStudents([...students, newSt]);
-                                                setNewStudentName("");
-                                            }}
-                                            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium">Add</button>
-                                    </div>
-                                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                                        {currentClassStudents.map(st => (
-                                            <div key={st.id} className="text-xs bg-white p-2.5 rounded-lg border border-slate-200 font-medium text-slate-700">
-                                                {st.name}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Welsh Concepts */}
-                                <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                    <h4 className="font-bold text-slate-800 text-sm">3. Welsh Concepts / Topics</h4>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Concept / Vocabulary..." 
-                                            value={newConceptName}
-                                            onChange={(e) => setNewConceptName(e.target.value)}
-                                            className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-                                        <button 
-                                            onClick={() => {
-                                                if (!newConceptName.trim()) return;
-                                                setConcepts([...concepts, newConceptName]);
-                                                setNewConceptName("");
-                                            }}
-                                            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium">Add</button>
-                                    </div>
-                                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                                        {concepts.map(con => (
-                                            <div key={con} className="text-xs bg-white p-2.5 rounded-lg border border-slate-200 font-medium text-slate-700">
-                                                {con}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                  <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs sm:text-sm">
+                    <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-1.5 rounded-lg font-medium ${activeTab === 'dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}>Dashboard</button>
+                    <button onClick={() => setActiveTab('student-portal')} className={`px-3 py-1.5 rounded-lg font-medium ${activeTab === 'student-portal' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}>Student Portal</button>
+                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-1.5 rounded-lg font-medium ${activeTab === 'admin' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}>Admin Setup</button>
+                  </div>
                 </div>
-            );
+              </header>
+
+              <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+                {/* Active Ticket Banner */}
+                {activeTab !== 'admin' && (
+                  <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-semibold uppercase text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">Active Exit Ticket</span>
+                      <h2 className="text-base sm:text-lg font-bold text-white mt-1">{activeTicket ? activeTicket.title : 'No active ticket'}</h2>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button onClick={handleSimulateSubmissions} className="text-xs bg-slate-700 text-emerald-300 border border-emerald-500/30 px-3 py-2 rounded-xl">⚡ Simulate 5 Responses</button>
+                      <button onClick={() => setShowQRModal(true)} className="text-xs bg-emerald-600 text-white px-3 py-2 rounded-xl">📱 Share QR</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 1: TEACHER DASHBOARD */}
+                {activeTab === 'dashboard' && (
+                  <div className="space-y-6">
+                    <div className="flex border-b border-slate-800 space-x-6 text-sm">
+                      <button onClick={() => setDashSubTab('understanding')} className={`pb-2 font-semibold border-b-2 ${dashSubTab === 'understanding' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400'}`}>1. Class Understanding</button>
+                      <button onClick={() => setDashSubTab('feedback')} className={`pb-2 font-semibold border-b-2 ${dashSubTab === 'feedback' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400'}`}>2. Lesson Feedback</button>
+                      <button onClick={() => setDashSubTab('learner')} className={`pb-2 font-semibold border-b-2 ${dashSubTab === 'learner' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400'}`}>3. Learner View</button>
+                    </div>
+
+                    {dashSubTab === 'understanding' && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <span className="text-xs text-slate-400">Total Submissions</span>
+                            <p className="text-2xl font-bold text-white mt-1">{currentSubmissions.length} / {currentClass?.students.length || 0}</p>
+                          </div>
+                          <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <span className="text-xs text-slate-400">Avg Confidence</span>
+                            <p className="text-2xl font-bold text-emerald-400 mt-1">{analytics.avgConfidence} / 5.0</p>
+                          </div>
+                          <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <span className="text-xs text-slate-400">Needs Support</span>
+                            <p className="text-2xl font-bold text-amber-400 mt-1">{analytics.needsSupport.length}</p>
+                          </div>
+                          <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <span className="text-xs text-slate-400">Can Peer Explain</span>
+                            <p className="text-2xl font-bold text-emerald-400 mt-1">{analytics.explainStats.Yes}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          <div className="lg:col-span-2 bg-slate-800/60 p-5 rounded-2xl border border-slate-700">
+                            <h3 className="text-base font-bold text-white mb-3">🗺️ Welsh Concept Difficulty Heatmap</h3>
+                            <div className="space-y-3">
+                              {Object.entries(analytics.conceptCounts).map(([concept, count]) => (
+                                <div key={concept} className="space-y-1">
+                                  <div className="flex justify-between text-xs">
+                                    <span>{concept}</span>
+                                    <span className="text-amber-400 font-bold">{count} struggles</span>
+                                  </div>
+                                  <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${(count / currentSubmissions.length) * 100}%` }}></div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-800/60 p-5 rounded-2xl border border-slate-700">
+                            <h3 className="text-base font-bold text-white mb-3">⚠️ Priority Support Roster</h3>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {analytics.needsSupport.map(item => (
+                                <div key={item.id} className="p-3 bg-slate-900 rounded-xl border border-amber-500/30 flex justify-between items-center text-xs">
+                                  <div>
+                                    <p className="font-bold text-white">{item.studentName}</p>
+                                    <p className="text-amber-400 text-[11px]">{item.difficultConcept}</p>
+                                  </div>
+                                  <span className="bg-amber-950 text-amber-400 px-2 py-0.5 rounded font-bold">Conf: {item.confidence}/5</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {dashSubTab === 'feedback' && (
+                      <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-700 space-y-6">
+                        <h3 className="text-base font-bold text-white">📈 Lesson Feedback Indicators (Section B)</h3>
+                        {BarChart && (
+                          <div className="h-64 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { name: 'Explanations Clear', rating: analytics.feedbackAverages.clarity },
+                                { name: 'Examples Helpful', rating: analytics.feedbackAverages.examples },
+                                { name: 'Pace Right', rating: analytics.feedbackAverages.pace },
+                                { name: 'Practise Opportunity', rating: analytics.feedbackAverages.practice },
+                                { name: 'Next Steps Clear', rating: analytics.feedbackAverages.nextSteps }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                                <YAxis domain={[0, 5]} stroke="#94a3b8" />
+                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569' }} />
+                                <Bar dataKey="rating" fill="#10b981" radius={[6, 6, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {dashSubTab === 'learner' && selectedStudentData && (
+                      <div className="bg-slate-800/60 p-6 rounded-2xl border border-slate-700 space-y-6">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-bold text-white">{selectedStudentData.info?.name}</h3>
+                          <select value={selectedStudentId} onChange={(e) => setSelectedStudentId(e.target.value)} className="bg-slate-900 border border-slate-700 text-sm rounded-lg px-3 py-1.5">
+                            {currentClass?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+                        {LineChart && selectedStudentData.progressionChartData.length > 0 && (
+                          <div className="h-56 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={selectedStudentData.progressionChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                <XAxis dataKey="date" stroke="#94a3b8" />
+                                <YAxis domain={[0, 5]} stroke="#94a3b8" />
+                                <Tooltip contentStyle={{ backgroundColor: '#1e293b' }} />
+                                <Line type="monotone" dataKey="confidence" stroke="#10b981" strokeWidth={3} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 2: STUDENT PORTAL */}
+                {activeTab === 'student-portal' && (
+                  <div className="max-w-xl mx-auto bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-6">
+                    <h2 className="text-lg font-bold text-white border-b border-slate-700 pb-3">📝 Exit Ticket / Tocyn Allan</h2>
+                    <form onSubmit={handleStudentSubmit} className="space-y-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Select Student:</label>
+                        <select value={activeStudentId} onChange={(e) => setActiveStudentId(e.target.value)} className="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5">
+                          {currentClass?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">How confident do you feel? (1 - 5)</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map(num => (
+                            <button key={num} type="button" onClick={() => setStudentForm({ ...studentForm, confidence: num })} className={`flex-1 py-2 rounded-lg font-bold text-xs border ${studentForm.confidence === num ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>{num}</button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Difficult Welsh Concept:</label>
+                        <select value={studentForm.difficultConcept} onChange={(e) => setStudentForm({ ...studentForm, difficultConcept: e.target.value })} className="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5">
+                          {currentClass?.concepts.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+
+                      <button type="submit" className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">Submit Response</button>
+                      {submittedSuccess && <p className="text-xs text-emerald-400 text-center">Submitted successfully!</p>}
+                    </form>
+                  </div>
+                )}
+
+                {/* TAB 3: ADMIN SETUP */}
+                {activeTab === 'admin' && (
+                  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6">
+                    <h2 className="text-lg font-bold text-white">⚙️ Welsh Curriculum Setup</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-slate-900 p-4 rounded-xl space-y-3">
+                        <h3 className="text-sm font-bold text-white">Class Concepts</h3>
+                        <div className="flex gap-2">
+                          <input type="text" value={newConceptInput} onChange={(e) => setNewConceptInput(e.target.value)} placeholder="New concept..." className="flex-1 bg-slate-800 border border-slate-700 text-xs rounded-lg p-2" />
+                          <button onClick={handleAddConcept} className="bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg">Add</button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {currentClass?.concepts.map(c => (
+                            <span key={c} className="bg-slate-800 border border-slate-700 text-xs px-2.5 py-1 rounded-lg text-slate-200 flex items-center gap-1">
+                              {c} <button onClick={() => handleRemoveConcept(c)} className="text-rose-400">×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </main>
+            </div>
+          );
         }
 
         ReactDOM.render(<App />, document.getElementById('root'));
