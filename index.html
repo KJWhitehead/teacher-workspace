@@ -14,6 +14,17 @@
 
     <script type="text/babel">
         const { useState } = React;
+        const [activePoll] = useState(() => {
+    const saved = localStorage.getItem('welsh_active_poll');
+    return saved ? JSON.parse(saved) : {
+        topicTitle: 'Treigladau a’r Amser Gorffennol',
+        concepts: [
+            "Treigladau (Mutations - Soft, Nasal, Aspirate)",
+            "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
+            "Berfau a Rhagenwau (Verbs & Pronouns)"
+        ]
+    };
+});
 
         const DEFAULT_CONCEPTS = [
             "Treigladau (Mutations - Soft, Nasal, Aspirate)",
