@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tocyn Allan - Exit Ticket</title>
-    
-    <!-- Suppress Tailwind CDN console warning -->
     <script>
         console.warn = (function(oldWarn) {
             return function(msg) {
@@ -19,22 +17,19 @@
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6 flex justify-center items-center">
 
     <div id="app" class="w-full max-w-xl">
-        <!-- Form Container -->
         <div id="form-container" class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
             <div class="border-b border-slate-700 pb-4">
-                <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dysgu Cymraeg</span>
+                <span id="class-badge" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dosbarth</span>
                 <h1 id="poll-topic" class="text-xl font-bold text-white mt-2">Tocyn Allan / Exit Ticket</h1>
-                <p id="poll-subject" class="text-xs text-slate-400">Welsh Language Second Language</p>
+                <p id="poll-subject" class="text-xs text-slate-400">Welsh Language Exit Ticket</p>
             </div>
 
             <form id="ticket-form" class="space-y-6">
-                <!-- Student Name -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Eich Enw / Your Name:</label>
                     <input type="text" id="studentName" required placeholder="e.g. Mali Evans" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
                 </div>
 
-                <!-- Section A -->
                 <div class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
                     <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section A: Dealltwriaeth / Understanding</h2>
                     
@@ -66,28 +61,12 @@
                     </div>
                 </div>
 
-                <!-- Section B -->
-                <div class="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
-                    <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section B: Profiad Dysgu / Learning Experience</h2>
-                    <div class="space-y-2 text-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">The explanations were clear.</span>
-                            <span class="text-emerald-400 font-bold">4 / 5</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">The examples helped me.</span>
-                            <span class="text-emerald-400 font-bold">4 / 5</span>
-                        </div>
-                    </div>
-                </div>
-
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/30">
                     Cyflwyno / Submit Exit Ticket
                 </button>
             </form>
         </div>
 
-        <!-- Success Container -->
         <div id="success-container" class="hidden bg-slate-800 p-8 rounded-2xl border border-emerald-500/30 text-center space-y-4 shadow-2xl">
             <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
             <h2 class="text-xl font-bold text-white">Diolch! Response Submitted!</h2>
@@ -102,26 +81,26 @@
         let selectedConfidence = 3;
         let selectedExplain = 'Almost';
 
-        // Load Active Poll from localStorage
-        function loadPoll() {
-            const savedPoll = JSON.parse(localStorage.getItem('welsh_active_poll') || 'null') || {
-                subject: 'Welsh Second Language',
-                topicTitle: 'Treigladau a’r Amser Gorffennol (Mutations & Past Tense)',
-                concepts: [
-                    "Treigladau (Mutations - Soft, Nasal, Aspirate)",
-                    "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
-                    "Berfau a Rhagenwau (Verbs & Pronouns)",
-                    "Patrymau Iaith (Sentence Patterns & Word Order)",
-                    "Ymarfer Siarad (Conversational Confidence)"
-                ]
-            };
+        function getUrlClassId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('class');
+        }
 
-            document.getElementById('poll-topic').innerText = savedPoll.topicTitle;
-            document.getElementById('poll-subject').innerText = savedPoll.subject;
+        function loadPoll() {
+            const classes = JSON.parse(localStorage.getItem('welsh_classes') || 'null') || [
+                { id: 'class-1', name: 'Blwyddyn 8 - Cymraeg Ail Iaith', topicTitle: 'Treigladau a’r Amser Gorffennol', concepts: ["Treigladau", "Amser Gorffennol", "Berfau"] },
+                { id: 'class-2', name: 'Year 10 GCSE Welsh', topicTitle: 'Patrymau Iaith a Geirfa', concepts: ["Patrymau Iaith", "Ymarfer Siarad"] }
+            ];
+
+            const urlClassId = getUrlClassId();
+            const currentClass = classes.find(c => c.id === urlClassId) || classes[0];
+
+            document.getElementById('class-badge').innerText = currentClass.name;
+            document.getElementById('poll-topic').innerText = currentClass.topicTitle;
 
             const conceptSelect = document.getElementById('difficultConcept');
             conceptSelect.innerHTML = '';
-            savedPoll.concepts.forEach(c => {
+            currentClass.concepts.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.innerText = c;
@@ -129,7 +108,6 @@
             });
         }
 
-        // Button Click Handlers
         document.querySelectorAll('.conf-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.conf-btn').forEach(b => {
@@ -150,14 +128,15 @@
             });
         });
 
-        // Form Submit
         document.getElementById('ticket-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const studentName = document.getElementById('studentName').value;
             const difficultConcept = document.getElementById('difficultConcept').value;
+            const classId = getUrlClassId() || JSON.parse(localStorage.getItem('welsh_classes'))[0].id;
 
             const newSub = {
                 id: 'sub-' + Date.now(),
+                classId,
                 studentName,
                 confidence: selectedConfidence,
                 difficultConcept,
