@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="cy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Workspace & Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    <!-- QRCode API CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } = window.Recharts || {};
+
+        function TeacherDashboard() {
+            const [showQR, setShowQR] = useState(false);
+            const [dashSubTab, setDashSubTab] = useState('understanding');
+            const [submissions, setSubmissions] = useState([]);
+
+            // Load live submissions from localStorage
+            useEffect(() => {
+                const load = () => {
+                    const saved = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
+                    setSubmissions(saved);
+                };
+                load();
+                const interval = setInterval(load, 3000); // Live poll every 3s
+                return () => clearInterval(interval);
+            }, []);
+
+            // Generate QR Code dynamically when modal opens
+            useEffect(() => {
+                if (showQR) {
+                    setTimeout(() => {
+                        const qrContainer = document.getElementById('qrcode');
+                        if (qrContainer) {
+                            qrContainer.innerHTML = '';
+                            const studentUrl = window.location.href.replace('teacher.html', 'index.html');
+                            new QRCode(qrContainer, {
+                                text: studentUrl,
+                                width: 180,
+                                height: 180,
+                                colorDark: "#0f172a",
+                                colorLight: "#ffffff"
+                            });
+                        }
+                    }, 100);
+                }
+            }, [showQR]);
+
+            const studentUrl = window.location.href.replace('teacher.html', 'index.html');
+
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+                    {/* Header Bar */}
+                    <header className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex justify-between items-center">
+                        <div>
+                            <h1 className="text-xl font-bold text-white">Ystafell Athrawon / Teacher Workspace</h1>
+                            <p className="text-xs text-slate-400">Live Welsh Exit Ticket Analytics & Class Control</p>
+                        </div>
+                        <button 
+                            onClick={() => setShowQR(true)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">
+                            📱 Display Class QR Code
+                        </button>
+                    </header>
+
+                    {/* Sub-tab Navigation */}
+                    <div className="flex border-b border-slate-800 space-x-6 text-sm">
+                        <button onClick={() => setDashSubTab('understanding')} className={`pb-3 font-semibold ${dashSubTab === 'understanding' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>1. Class Understanding</button>
+                        <button onClick={() => setDashSubTab('feedback')} className={`pb-3 font-semibold ${dashSubTab === 'feedback' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>2. Lesson Feedback</button>
+                    </div>
+
+                    {/* Tab 1: Class Understanding */}
+                    {dashSubTab === 'understanding' && (
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                                    <span className="text-xs text-slate-400 font-semibold uppercase">Total Responses</span>
+                                    <p className="text-3xl font-bold text-white mt-1">{submissions.length}</p>
+                                </div>
+                                <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                                    <span className="text-xs text-slate-400 font-semibold uppercase">Avg Confidence</span>
+                                    <p className="text-3xl font-bold text-emerald-400 mt-1">
+                                        {submissions.length ? (submissions.reduce((a,b) => a + b.confidence, 0) / submissions.length).toFixed(1) : '0.0'} / 5.0
+                                    </p>
+                                </div>
+                                <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                                    <span className="text-xs text-slate-400 font-semibold uppercase">Needs Support</span>
+                                    <p className="text-3xl font-bold text-amber-400 mt-1">
+                                        {submissions.filter(s => s.confidence <= 2).length}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Submissions Table */}
+                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                                <h3 className="font-bold text-white mb-4">Live Student Submissions</h3>
+                                {submissions.length === 0 ? (
+                                    <p className="text-xs text-slate-500 italic">No student submissions recorded yet. Share the QR code with students!</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {submissions.map(s => (
+                                            <div key={s.id} className="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                                                <div>
+                                                    <span className="font-bold text-white">{s.studentName}</span>
+                                                    <span className="text-slate-400 ml-3">Topic: {s.difficultConcept}</span>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded font-bold ${s.confidence <= 2 ? 'bg-amber-950 text-amber-400' : 'bg-emerald-950 text-emerald-400'}`}>
+                                                    Conf: {s.confidence}/5
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* QR Code Modal */}
+                    {showQR && (
+                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-sm w-full text-center space-y-4">
+                                <h3 className="font-bold text-white text-lg">Scan Exit Ticket QR Code</h3>
+                                <div id="qrcode" className="bg-white p-4 rounded-xl inline-block shadow-inner"></div>
+                                <input type="text" readOnly value={studentUrl} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-400 text-center" />
+                                <button onClick={() => setShowQR(false)} className="w-full bg-slate-700 text-white font-bold py-2 rounded-xl text-xs">Close</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<TeacherDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
