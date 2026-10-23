@@ -3,39 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Workspace & Analytics</title>
+    <title>Teacher Workspace - Poll & Curriculum Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
-    <!-- QRCode API CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } = window.Recharts || {};
+        const { useState, useEffect } = React;
+
+        const DEFAULT_CONCEPTS = [
+            "Treigladau (Mutations - Soft, Nasal, Aspirate)",
+            "Amser Gorffennol (Past Tense - Ga i, Mi wnes i)",
+            "Berfau a Rhagenwau (Verbs & Pronouns)",
+            "Patrymau Iaith (Sentence Patterns & Word Order)",
+            "Ymarfer Siarad (Conversational Confidence)"
+        ];
 
         function TeacherDashboard() {
+            // State management
             const [showQR, setShowQR] = useState(false);
+            const [showNewPollModal, setShowNewPollModal] = useState(false);
             const [dashSubTab, setDashSubTab] = useState('understanding');
+            
+            // Poll & Subject State
+            const [activePoll, setActivePoll] = useState(() => {
+                const saved = localStorage.getItem('welsh_active_poll');
+                return saved ? JSON.parse(saved) : {
+                    id: 'poll-1',
+                    subject: 'Welsh Second Language',
+                    classGrade: 'Year 8',
+                    topicTitle: 'Treigladau a’r Amser Gorffennol (Mutations & Past Tense)',
+                    concepts: DEFAULT_CONCEPTS
+                };
+            });
+
+            // Form inputs for creating a new poll
+            const [newSubject, setNewSubject] = useState(activePoll.subject);
+            const [newTopicTitle, setNewTopicTitle] = useState('');
+            const [newConceptInput, setNewConceptInput] = useState('');
             const [submissions, setSubmissions] = useState([]);
 
-            // Load live submissions from localStorage
+            // Sync active poll to localStorage
+            useEffect(() => {
+                localStorage.setItem('welsh_active_poll', JSON.stringify(activePoll));
+            }, [activePoll]);
+
+            // Live-poll student responses
             useEffect(() => {
                 const load = () => {
                     const saved = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
                     setSubmissions(saved);
                 };
                 load();
-                const interval = setInterval(load, 3000); // Live poll every 3s
+                const interval = setInterval(load, 2000);
                 return () => clearInterval(interval);
             }, []);
 
-            // Generate QR Code dynamically when modal opens
+            // Generate QR code dynamically
             useEffect(() => {
                 if (showQR) {
                     setTimeout(() => {
@@ -55,30 +84,79 @@
                 }
             }, [showQR]);
 
+            // Handlers
+            const handleCreatePoll = (e) => {
+                e.preventDefault();
+                if (!newTopicTitle.trim()) return;
+
+                const newPollObj = {
+                    id: `poll-${Date.now()}`,
+                    subject: newSubject,
+                    classGrade: activePoll.classGrade,
+                    topicTitle: newTopicTitle,
+                    concepts: activePoll.concepts
+                };
+
+                setActivePoll(newPollObj);
+                setNewTopicTitle('');
+                setShowNewPollModal(false);
+                alert("New Poll Published! Students scanning the QR code will now see this updated topic.");
+            };
+
+            const handleAddConcept = () => {
+                if (!newConceptInput.trim()) return;
+                const updatedConcepts = [...activePoll.concepts, newConceptInput.trim()];
+                setActivePoll({ ...activePoll, concepts: updatedConcepts });
+                setNewConceptInput('');
+            };
+
+            const handleRemoveConcept = (conceptToRemove) => {
+                const updatedConcepts = activePoll.concepts.filter(c => c !== conceptToRemove);
+                setActivePoll({ ...activePoll, concepts: updatedConcepts });
+            };
+
+            const handleClearSubmissions = () => {
+                if (confirm("Are you sure you want to reset responses for this new poll?")) {
+                    localStorage.setItem('welsh_et_submissions', JSON.stringify([]));
+                    setSubmissions([]);
+                }
+            };
+
             const studentUrl = window.location.href.replace('teacher.html', 'index.html');
 
             return (
                 <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
                     {/* Header Bar */}
-                    <header className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex justify-between items-center">
+                    <header className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-white">Ystafell Athrawon / Teacher Workspace</h1>
-                            <p className="text-xs text-slate-400">Live Welsh Exit Ticket Analytics & Class Control</p>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">LIVE</span>
+                                <h1 className="text-xl font-bold text-white">Teacher Admin & Poll Manager</h1>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">Subject: <span className="text-emerald-400 font-semibold">{activePoll.subject}</span> | Current Topic: <span className="text-white font-semibold">{activePoll.topicTitle}</span></p>
                         </div>
-                        <button 
-                            onClick={() => setShowQR(true)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">
-                            📱 Display Class QR Code
-                        </button>
+
+                        <div className="flex flex-wrap gap-2">
+                            <button 
+                                onClick={() => setShowNewPollModal(true)}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow">
+                                ➕ Create New Poll / Change Subject
+                            </button>
+                            <button 
+                                onClick={() => setShowQR(true)}
+                                className="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">
+                                📱 Display Student QR Code
+                            </button>
+                        </div>
                     </header>
 
-                    {/* Sub-tab Navigation */}
+                    {/* Navigation Tabs */}
                     <div className="flex border-b border-slate-800 space-x-6 text-sm">
-                        <button onClick={() => setDashSubTab('understanding')} className={`pb-3 font-semibold ${dashSubTab === 'understanding' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>1. Class Understanding</button>
-                        <button onClick={() => setDashSubTab('feedback')} className={`pb-3 font-semibold ${dashSubTab === 'feedback' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>2. Lesson Feedback</button>
+                        <button onClick={() => setDashSubTab('understanding')} className={`pb-3 font-semibold ${dashSubTab === 'understanding' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>1. Live Responses</button>
+                        <button onClick={() => setDashSubTab('concepts')} className={`pb-3 font-semibold ${dashSubTab === 'concepts' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}>2. Edit Concepts & Topics</button>
                     </div>
 
-                    {/* Tab 1: Class Understanding */}
+                    {/* TAB 1: LIVE RESPONSES */}
                     {dashSubTab === 'understanding' && (
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -89,33 +167,39 @@
                                 <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700">
                                     <span className="text-xs text-slate-400 font-semibold uppercase">Avg Confidence</span>
                                     <p className="text-3xl font-bold text-emerald-400 mt-1">
-                                        {submissions.length ? (submissions.reduce((a,b) => a + b.confidence, 0) / submissions.length).toFixed(1) : '0.0'} / 5.0
+                                        {submissions.length ? (submissions.reduce((a,b) => a + Number(b.confidence), 0) / submissions.length).toFixed(1) : '0.0'} / 5.0
                                     </p>
                                 </div>
                                 <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                                    <span className="text-xs text-slate-400 font-semibold uppercase">Needs Support</span>
+                                    <span className="text-xs text-slate-400 font-semibold uppercase">Flagged For Support</span>
                                     <p className="text-3xl font-bold text-amber-400 mt-1">
-                                        {submissions.filter(s => s.confidence <= 2).length}
+                                        {submissions.filter(s => Number(s.confidence) <= 2).length}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Submissions Table */}
-                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                                <h3 className="font-bold text-white mb-4">Live Student Submissions</h3>
+                            {/* Response List */}
+                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-bold text-white">Live Student Submissions for: "{activePoll.topicTitle}"</h3>
+                                    <button onClick={handleClearSubmissions} className="text-xs text-rose-400 hover:text-rose-300 font-medium">Reset Responses</button>
+                                </div>
+
                                 {submissions.length === 0 ? (
-                                    <p className="text-xs text-slate-500 italic">No student submissions recorded yet. Share the QR code with students!</p>
+                                    <p className="text-xs text-slate-500 italic py-4">No submissions received yet for this poll. Students can scan the QR code to participate.</p>
                                 ) : (
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                                         {submissions.map(s => (
-                                            <div key={s.id} className="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                                            <div key={s.id} className="bg-slate-900 p-3.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
                                                 <div>
-                                                    <span className="font-bold text-white">{s.studentName}</span>
-                                                    <span className="text-slate-400 ml-3">Topic: {s.difficultConcept}</span>
+                                                    <span className="font-bold text-white text-sm">{s.studentName}</span>
+                                                    <p className="text-slate-400 mt-0.5">Difficult area: <span className="text-amber-300">{s.difficultConcept}</span></p>
                                                 </div>
-                                                <span className={`px-2 py-1 rounded font-bold ${s.confidence <= 2 ? 'bg-amber-950 text-amber-400' : 'bg-emerald-950 text-emerald-400'}`}>
-                                                    Conf: {s.confidence}/5
-                                                </span>
+                                                <div className="text-right">
+                                                    <span className={`px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}`}>
+                                                        Conf: {s.confidence}/5
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -124,11 +208,80 @@
                         </div>
                     )}
 
-                    {/* QR Code Modal */}
+                    {/* TAB 2: EDIT CONCEPTS */}
+                    {dashSubTab === 'concepts' && (
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6">
+                            <div>
+                                <h3 className="font-bold text-white text-base">⚙️ Topic & Concept Configurator</h3>
+                                <p className="text-xs text-slate-400 mt-1">Add or remove specific grammar rules or vocabulary options that appear on the student ticket dropdown.</p>
+                            </div>
+
+                            <div className="space-y-4 max-w-xl">
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Add new grammar rule or concept..." 
+                                        value={newConceptInput}
+                                        onChange={(e) => setNewConceptInput(e.target.value)}
+                                        className="flex-1 bg-slate-900 border border-slate-700 text-xs rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500" />
+                                    <button 
+                                        onClick={handleAddConcept}
+                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">
+                                        Add Concept
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2 pt-2">
+                                    {activePoll.concepts.map(con => (
+                                        <div key={con} className="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-200">
+                                            <span>{con}</span>
+                                            <button onClick={() => handleRemoveConcept(con)} className="text-rose-400 hover:text-rose-300 font-bold px-2">Remove</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL 1: CREATE NEW POLL */}
+                    {showNewPollModal && (
+                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
+                                <h3 className="font-bold text-white text-base">Create New Exit Ticket Poll</h3>
+                                <form onSubmit={handleCreatePoll} className="space-y-4 text-xs">
+                                    <div>
+                                        <label className="block text-slate-300 font-medium mb-1">Subject / Language Focus:</label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            value={newSubject}
+                                            onChange={(e) => setNewSubject(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-300 font-medium mb-1">Poll / Topic Title (What students are learning today):</label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            placeholder="e.g. Amser Dyfodol (Future Tense)"
+                                            value={newTopicTitle}
+                                            onChange={(e) => setNewTopicTitle(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+                                    </div>
+                                    <div className="flex gap-2 pt-2">
+                                        <button type="button" onClick={() => setShowNewPollModal(false)} className="flex-1 bg-slate-700 text-white font-bold py-2.5 rounded-xl">Cancel</button>
+                                        <button type="submit" className="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl shadow">Publish Poll</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL 2: QR CODE */}
                     {showQR && (
                         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                             <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-sm w-full text-center space-y-4">
-                                <h3 className="font-bold text-white text-lg">Scan Exit Ticket QR Code</h3>
+                                <h3 className="font-bold text-white text-lg">Scan Student Exit Ticket QR Code</h3>
                                 <div id="qrcode" className="bg-white p-4 rounded-xl inline-block shadow-inner"></div>
                                 <input type="text" readOnly value={studentUrl} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-400 text-center" />
                                 <button onClick={() => setShowQR(false)} className="w-full bg-slate-700 text-white font-bold py-2 rounded-xl text-xs">Close</button>
