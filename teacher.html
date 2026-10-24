@@ -106,7 +106,6 @@
 
         <!-- TAB 2: QUESTION & CONCEPT CONFIGURATOR -->
         <div id="section-config" class="hidden space-y-6">
-            <!-- Summary Banner -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
                 <div>
                     <span class="text-slate-400">Configuring Exit Ticket for:</span>
@@ -116,7 +115,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Section A Question & Concept Controls -->
+                <!-- Section A Questions -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section A Questions</span>
@@ -134,7 +133,7 @@
                     </div>
                 </div>
 
-                <!-- Section B Question Controls -->
+                <!-- Section B Questions with Presets -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section B Questions</span>
@@ -142,6 +141,17 @@
                         <p class="text-xs text-slate-400 mt-1">Students rate each statement on a 1–5 scale on their ticket.</p>
                     </div>
 
+                    <!-- Quick Template Presets -->
+                    <div class="space-y-2 pt-1">
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Load Quick Template:</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="loadFeedbackPreset('standard')" class="bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 font-medium px-3 py-1.5 rounded-lg transition">Standard</button>
+                            <button type="button" onclick="loadFeedbackPreset('speaking')" class="bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 font-medium px-3 py-1.5 rounded-lg transition">Speaking Focus</button>
+                            <button type="button" onclick="loadFeedbackPreset('grammar')" class="bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 font-medium px-3 py-1.5 rounded-lg transition">Grammar Focus</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Statement Input & Active List -->
                     <div class="space-y-3 pt-2">
                         <label class="block text-xs font-semibold text-slate-300">Active Rating Statements:</label>
                         <div class="flex gap-2">
@@ -206,15 +216,20 @@
 
     <script>
         const DEFAULT_CONCEPTS = [
-    "Treiglad Meddal (Soft Mutation)",
-    "Treiglad Trwynol / Lledneis (Nasal/Aspirate)",
-    "Amser Presennol (Present Tense)",
-    "Amser Gorffennol (Past Tense - wnes i / roedd)",
-    "Amser Dyfodol (Future Tense - bydda i)",
-    "Geirfa ac Ymadroddion Newydd (New Vocab)",
-    "Sentences with 'Er mwyn' / 'Achos'"
-];
-        const DEFAULT_FEEDBACK = ["The explanations were clear.", "The examples helped me understand.", "The pace felt right."];
+            "Treiglad Meddal (Soft Mutation)",
+            "Treiglad Trwynol / Lledneis (Nasal/Aspirate)",
+            "Amser Presennol (Present Tense)",
+            "Amser Gorffennol (Past Tense - wnes i / roedd)",
+            "Amser Dyfodol (Future Tense - bydda i)",
+            "Geirfa ac Ymadroddion Newydd (New Vocab)",
+            "Sentences with 'Er mwyn' / 'Achos'"
+        ];
+
+        const DEFAULT_FEEDBACK = [
+            "The explanations were clear.",
+            "The examples helped me understand.",
+            "The pace felt right."
+        ];
 
         function getClasses() {
             return JSON.parse(localStorage.getItem('welsh_classes') || '[]');
@@ -356,6 +371,37 @@
                 item.innerHTML = `<span>${q}</span> <button onclick="removeFeedbackQuestion(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-2">Delete</button>`;
                 fbList.appendChild(item);
             });
+        }
+
+        function loadFeedbackPreset(type) {
+            const presets = {
+                standard: [
+                    "The explanations were clear.",
+                    "The examples helped me understand.",
+                    "The pace felt right."
+                ],
+                speaking: [
+                    "I felt confident speaking Welsh out loud today.",
+                    "Partner/group work helped me practice new vocabulary.",
+                    "I had enough time to practice my pronunciation."
+                ],
+                grammar: [
+                    "I understand when and why to apply this rule.",
+                    "Word mats/examples helped me check my work.",
+                    "I feel confident using this rule independently."
+                ]
+            };
+
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            classes.forEach(c => {
+                if (c.id === activeId) {
+                    c.feedbackQuestions = [...presets[type]];
+                }
+            });
+
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
+            loadConfigTab();
         }
 
         function addConcept() {
