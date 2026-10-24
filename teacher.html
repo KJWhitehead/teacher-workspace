@@ -70,7 +70,7 @@
         <!-- Navigation Sub-tabs -->
         <div class="flex border-b border-slate-800 space-x-6 text-sm">
             <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Student Responses & Stats</button>
-            <button onclick="switchTab('config')" id="tab-config" class="pb-3 font-semibold text-slate-400 hover:text-slate-200">2. Tailor Questions & Concepts</button>
+            <button onclick="switchTab('config')" id="tab-config" class="pb-3 font-semibold text-slate-400 hover:text-slate-200">2. View & Tailor Questions</button>
         </div>
 
         <!-- TAB 1: ANALYTICS -->
@@ -106,29 +106,50 @@
 
         <!-- TAB 2: QUESTION & CONCEPT CONFIGURATOR -->
         <div id="section-config" class="hidden space-y-6">
+            <!-- Summary Banner -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-slate-400">Configuring Exit Ticket for:</span>
+                    <span id="config-class-label" class="font-bold text-emerald-400 ml-1">--</span>
+                </div>
+                <button onclick="resetClassToDefaults()" class="text-slate-400 hover:text-amber-400 font-semibold">↺ Reset Questions to Default</button>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                <!-- Section A Question & Concept Controls -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
-                        <h3 class="font-bold text-white text-base">⚙️ Difficult Concepts Dropdown</h3>
-                        <p class="text-xs text-slate-400 mt-1">Tailor the specific concepts students select from on their ticket for this class.</p>
+                        <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section A Questions</span>
+                        <h3 class="font-bold text-white text-base mt-2">Understanding & Concept Dropdown</h3>
+                        <p class="text-xs text-slate-400 mt-1">Students are asked: <i>"How confident do you feel today (1-5)?"</i> and <i>"Which part was most difficult?"</i></p>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-concept-input" placeholder="e.g. Treiglad Meddal" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                        <button onclick="addConcept()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
+
+                    <div class="space-y-3 pt-2">
+                        <label class="block text-xs font-semibold text-slate-300">Difficult Concepts List (Dropdown options for students):</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-concept-input" placeholder="e.g. Treiglad Meddal" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                            <button onclick="addConcept()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add Concept</button>
+                        </div>
+                        <div id="concepts-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
                     </div>
-                    <div id="concepts-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
                 </div>
 
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                <!-- Section B Question Controls -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
-                        <h3 class="font-bold text-white text-base">⚙️ Feedback Rating Statements</h3>
-                        <p class="text-xs text-slate-400 mt-1">Tailor the 1-5 rating questions for this class.</p>
+                        <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section B Questions</span>
+                        <h3 class="font-bold text-white text-base mt-2">Learning Experience Statements</h3>
+                        <p class="text-xs text-slate-400 mt-1">Students rate each statement on a 1–5 scale on their ticket.</p>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-feedback-input" placeholder="e.g. The examples were helpful." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                        <button onclick="addFeedbackQuestion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
+
+                    <div class="space-y-3 pt-2">
+                        <label class="block text-xs font-semibold text-slate-300">Active Rating Statements:</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-feedback-input" placeholder="e.g. The examples were helpful." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                            <button onclick="addFeedbackQuestion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add Statement</button>
+                        </div>
+                        <div id="feedback-questions-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
                     </div>
-                    <div id="feedback-questions-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </div>
@@ -155,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Modal: Publish New Poll for Active Class -->
+    <!-- Modal: Publish New Poll -->
     <div id="poll-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
             <h3 class="font-bold text-white text-base">Publish New Poll for Active Class</h3>
@@ -184,6 +205,9 @@
     </div>
 
     <script>
+        const DEFAULT_CONCEPTS = ["Grammar Rules & Sentence Structure", "Vocabulary & Pronunciation", "Verb Tenses"];
+        const DEFAULT_FEEDBACK = ["The explanations were clear.", "The examples helped me understand.", "The pace felt right."];
+
         function getClasses() {
             return JSON.parse(localStorage.getItem('welsh_classes') || '[]');
         }
@@ -303,6 +327,9 @@
 
             if (!currentClass) return;
 
+            document.getElementById('config-class-label').innerText = currentClass.name;
+
+            // Render Section A Concepts
             const conceptsList = document.getElementById('concepts-list');
             conceptsList.innerHTML = '';
             (currentClass.concepts || []).forEach((con, index) => {
@@ -312,6 +339,7 @@
                 conceptsList.appendChild(item);
             });
 
+            // Render Section B Questions
             const fbList = document.getElementById('feedback-questions-list');
             fbList.innerHTML = '';
             (currentClass.feedbackQuestions || []).forEach((q, index) => {
@@ -380,6 +408,21 @@
             loadConfigTab();
         }
 
+        function resetClassToDefaults() {
+            if (confirm("Reset questions and concepts for this class to standard defaults?")) {
+                const classes = getClasses();
+                const activeId = getActiveClassId();
+                classes.forEach(c => {
+                    if (c.id === activeId) {
+                        c.concepts = [...DEFAULT_CONCEPTS];
+                        c.feedbackQuestions = [...DEFAULT_FEEDBACK];
+                    }
+                });
+                localStorage.setItem('welsh_classes', JSON.stringify(classes));
+                loadConfigTab();
+            }
+        }
+
         document.getElementById('onboarding-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('onboard-class-name').value;
@@ -389,8 +432,8 @@
                 id: 'class-' + Date.now(),
                 name,
                 topicTitle,
-                concepts: ["Grammar Rules & Sentence Structure", "Vocabulary & Pronunciation", "Verb Tenses"],
-                feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
+                concepts: [...DEFAULT_CONCEPTS],
+                feedbackQuestions: [...DEFAULT_FEEDBACK]
             };
 
             localStorage.setItem('welsh_classes', JSON.stringify([newClass]));
@@ -408,8 +451,8 @@
                 id: 'class-' + Date.now(),
                 name,
                 topicTitle,
-                concepts: ["Grammar Rules & Sentence Structure", "Vocabulary & Pronunciation", "Verb Tenses"],
-                feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
+                concepts: [...DEFAULT_CONCEPTS],
+                feedbackQuestions: [...DEFAULT_FEEDBACK]
             };
 
             classes.push(newClass);
