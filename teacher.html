@@ -17,7 +17,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6">
 
-    <!-- FIRST TIME SETUP / ONBOARDING VIEW -->
+    <!-- FIRST TIME SETUP VIEW -->
     <div id="onboarding-container" class="hidden max-w-md mx-auto my-12 bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6 text-center">
         <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">🏫</div>
         <div>
@@ -28,10 +28,10 @@
         <form id="onboarding-form" class="space-y-4 text-xs text-left">
             <div>
                 <label class="block text-slate-300 font-medium mb-1">Class Name / Group:</label>
-                <input type="text" id="onboard-class-name" required placeholder="e.g. Year 8 Cymraeg Ail Iaith" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white">
+                <input type="text" id="onboard-class-name" required placeholder="e.g. Year 8 Cymraeg" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white">
             </div>
             <div>
-                <label class="block text-slate-300 font-medium mb-1">Today's Lesson Topic:</label>
+                <label class="block text-slate-300 font-medium mb-1">Today's Lesson Topic / Poll Title:</label>
                 <input type="text" id="onboard-topic-title" required placeholder="e.g. Treigladau Meddal (Soft Mutations)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white">
             </div>
             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/30">
@@ -46,10 +46,10 @@
         <header class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">TEACHER WORKSPACE</span>
-                    <h1 class="text-xl font-bold text-white">Teacher Dashboard</h1>
+                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">TEACHER WORKSPACE</span>
+                    <h1 id="hdr-class-name" class="text-xl font-bold text-white">--</h1>
                 </div>
-                <p class="text-xs text-slate-400 mt-1">Active Topic: <span id="hdr-topic" class="text-white font-semibold">--</span></p>
+                <p class="text-xs text-slate-400 mt-1">Active Poll Topic: <span id="hdr-topic" class="text-emerald-400 font-semibold">--</span></p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
@@ -59,7 +59,7 @@
                     ➕ Add Class
                 </button>
                 <button onclick="toggleModal('poll-modal', true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition">
-                    📝 New Topic
+                    📝 Publish New Poll
                 </button>
                 <button onclick="showQRModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition">
                     📱 QR Code
@@ -69,7 +69,7 @@
 
         <!-- Navigation Sub-tabs -->
         <div class="flex border-b border-slate-800 space-x-6 text-sm">
-            <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Live Responses & Stats</button>
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Student Responses & Stats</button>
             <button onclick="switchTab('config')" id="tab-config" class="pb-3 font-semibold text-slate-400 hover:text-slate-200">2. Tailor Questions & Concepts</button>
         </div>
 
@@ -107,27 +107,25 @@
         <!-- TAB 2: QUESTION & CONCEPT CONFIGURATOR -->
         <div id="section-config" class="hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Concept Options -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
                     <div>
-                        <h3 class="font-bold text-white text-base">⚙️ Section A: Difficult Concepts Dropdown</h3>
-                        <p class="text-xs text-slate-400 mt-1">Tailor the grammar rules or topics students can select as their main challenge.</p>
+                        <h3 class="font-bold text-white text-base">⚙️ Difficult Concepts Dropdown</h3>
+                        <p class="text-xs text-slate-400 mt-1">Tailor the specific concepts students select from on their ticket for this class.</p>
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="new-concept-input" placeholder="e.g. Treiglad Meddal (Soft Mutation)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <input type="text" id="new-concept-input" placeholder="e.g. Treiglad Meddal" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                         <button onclick="addConcept()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
                     </div>
                     <div id="concepts-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Section B Questions -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
                     <div>
-                        <h3 class="font-bold text-white text-base">⚙️ Section B: Learning Experience Statements</h3>
-                        <p class="text-xs text-slate-400 mt-1">Tailor the statements students rate regarding today's lesson.</p>
+                        <h3 class="font-bold text-white text-base">⚙️ Feedback Rating Statements</h3>
+                        <p class="text-xs text-slate-400 mt-1">Tailor the 1-5 rating questions for this class.</p>
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="new-feedback-input" placeholder="e.g. I had enough practice time." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <input type="text" id="new-feedback-input" placeholder="e.g. The examples were helpful." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                         <button onclick="addFeedbackQuestion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
                     </div>
                     <div id="feedback-questions-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
@@ -146,8 +144,8 @@
                     <input type="text" id="new-class-name" required placeholder="e.g. Year 9 Cymraeg" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
                 </div>
                 <div>
-                    <label class="block text-slate-300 font-medium mb-1">Initial Topic Title:</label>
-                    <input type="text" id="new-class-topic" required placeholder="e.g. Amser Gorffennol (Past Tense)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
+                    <label class="block text-slate-300 font-medium mb-1">Initial Poll Topic Title:</label>
+                    <input type="text" id="new-class-topic" required placeholder="e.g. Amser Gorffennol" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="toggleModal('class-modal', false)" class="flex-1 bg-slate-700 text-white font-bold py-2.5 rounded-xl">Cancel</button>
@@ -157,18 +155,19 @@
         </div>
     </div>
 
-    <!-- Modal: New Topic -->
+    <!-- Modal: Publish New Poll for Active Class -->
     <div id="poll-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
-            <h3 class="font-bold text-white text-base">Update Lesson Topic Title</h3>
-            <form id="create-poll-form" class="space-y-4 text-xs">
+            <h3 class="font-bold text-white text-base">Publish New Poll for Active Class</h3>
+            <form id="publish-poll-form" class="space-y-4 text-xs">
                 <div>
-                    <label class="block text-slate-300 font-medium mb-1">New Topic Title:</label>
-                    <input type="text" id="poll-topic-title" required placeholder="e.g. Amser Dyfodol (Future Tense)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
+                    <label class="block text-slate-300 font-medium mb-1">New Poll / Topic Title:</label>
+                    <input type="text" id="poll-topic-input" required placeholder="e.g. Amser Dyfodol (Future Tense)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
                 </div>
+                <p class="text-[11px] text-slate-400">Publishing an updated topic title will immediately reflect on the exit ticket when students in this class scan the QR code.</p>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="toggleModal('poll-modal', false)" class="flex-1 bg-slate-700 text-white font-bold py-2.5 rounded-xl">Cancel</button>
-                    <button type="submit" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl">Update Topic</button>
+                    <button type="submit" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl">Publish Poll</button>
                 </div>
             </form>
         </div>
@@ -258,6 +257,7 @@
             });
 
             const currentClass = classes.find(c => c.id === activeId) || classes[0];
+            document.getElementById('hdr-class-name').innerText = currentClass.name;
             document.getElementById('hdr-topic').innerText = currentClass.topicTitle;
             document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
@@ -303,7 +303,6 @@
 
             if (!currentClass) return;
 
-            // Render Concepts
             const conceptsList = document.getElementById('concepts-list');
             conceptsList.innerHTML = '';
             (currentClass.concepts || []).forEach((con, index) => {
@@ -313,7 +312,6 @@
                 conceptsList.appendChild(item);
             });
 
-            // Render Feedback Questions
             const fbList = document.getElementById('feedback-questions-list');
             fbList.innerHTML = '';
             (currentClass.feedbackQuestions || []).forEach((q, index) => {
@@ -382,7 +380,6 @@
             loadConfigTab();
         }
 
-        // Onboarding Form Handler
         document.getElementById('onboarding-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('onboard-class-name').value;
@@ -401,7 +398,6 @@
             loadDashboard();
         });
 
-        // Add New Class Handler
         document.getElementById('create-class-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('new-class-name').value;
@@ -424,10 +420,9 @@
             loadDashboard();
         });
 
-        // Update Topic Handler
-        document.getElementById('create-poll-form').addEventListener('submit', (e) => {
+        document.getElementById('publish-poll-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const newTopic = document.getElementById('poll-topic-title').value;
+            const newTopic = document.getElementById('poll-topic-input').value;
             const classes = getClasses();
             const activeId = getActiveClassId();
 
