@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Workspace - Multi-Class Dashboard</title>
+    <title>Teacher Workspace - Question & Class Manager</title>
     <script>
         console.warn = (function(oldWarn) {
             return function(msg) {
@@ -22,22 +22,20 @@
         <header class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">MULTI-CLASS</span>
+                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">CUSTOMIZABLE</span>
                     <h1 class="text-xl font-bold text-white">Teacher Dashboard</h1>
                 </div>
                 <p class="text-xs text-slate-400 mt-1">Active Topic: <span id="hdr-topic" class="text-white font-semibold">--</span></p>
             </div>
 
-            <!-- Class Selector & Actions -->
             <div class="flex flex-wrap items-center gap-2">
                 <select id="class-selector" onchange="switchClass(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-emerald-400 font-semibold rounded-xl px-3 py-2.5 outline-none">
-                    <!-- Populated dynamically -->
                 </select>
                 <button onclick="toggleModal('class-modal', true)" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition">
                     ➕ Add Class
                 </button>
                 <button onclick="toggleModal('poll-modal', true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition">
-                    📝 New Poll
+                    📝 New Topic
                 </button>
                 <button onclick="showQRModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition">
                     📱 QR Code
@@ -45,35 +43,77 @@
             </div>
         </header>
 
-        <!-- Metric Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                <span class="text-xs text-slate-400 font-semibold uppercase">Total Responses</span>
-                <p id="stat-total" class="text-3xl font-bold text-white mt-1">0</p>
+        <!-- Navigation Sub-tabs -->
+        <div class="flex border-b border-slate-800 space-x-6 text-sm">
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Live Responses & Stats</button>
+            <button onclick="switchTab('config')" id="tab-config" class="pb-3 font-semibold text-slate-400 hover:text-slate-200">2. Tailor Exit Ticket Questions & Concepts</button>
+        </div>
+
+        <!-- TAB 1: ANALYTICS -->
+        <div id="section-analytics" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                    <span class="text-xs text-slate-400 font-semibold uppercase">Total Responses</span>
+                    <p id="stat-total" class="text-3xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                    <span class="text-xs text-slate-400 font-semibold uppercase">Avg Confidence</span>
+                    <p id="stat-avg" class="text-3xl font-bold text-emerald-400 mt-1">0.0 / 5.0</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
+                    <span class="text-xs text-slate-400 font-semibold uppercase">Needs Support (Conf ≤ 2)</span>
+                    <p id="stat-flagged" class="text-3xl font-bold text-amber-400 mt-1">0</p>
+                </div>
             </div>
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                <span class="text-xs text-slate-400 font-semibold uppercase">Avg Confidence</span>
-                <p id="stat-avg" class="text-3xl font-bold text-emerald-400 mt-1">0.0 / 5.0</p>
-            </div>
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700">
-                <span class="text-xs text-slate-400 font-semibold uppercase">Needs Support (Conf ≤ 2)</span>
-                <p id="stat-flagged" class="text-3xl font-bold text-amber-400 mt-1">0</p>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 id="table-title" class="font-bold text-white">Responses for Selected Class</h3>
+                    <button onclick="clearSubmissions()" class="text-xs text-rose-400 hover:text-rose-300">Reset Class Responses</button>
+                </div>
+                <div id="submissions-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <p class="text-xs text-slate-500 italic py-4">No student responses yet for this class.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Live Submissions -->
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 id="table-title" class="font-bold text-white">Responses for Selected Class</h3>
-                <button onclick="clearSubmissions()" class="text-xs text-rose-400 hover:text-rose-300">Reset Class Responses</button>
-            </div>
-            <div id="submissions-list" class="space-y-2 max-h-96 overflow-y-auto">
-                <p class="text-xs text-slate-500 italic py-4">No student responses yet for this class.</p>
+        <!-- TAB 2: QUESTION & CONCEPT CONFIGURATOR -->
+        <div id="section-config" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Concept / Difficulty Options -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-white text-base">⚙️ Section A: Difficult Concepts Dropdown</h3>
+                        <p class="text-xs text-slate-400 mt-1">Tailor the grammar rules or topics students can select as their main challenge today.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-concept-input" placeholder="e.g. Treigladau Lledneis" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <button onclick="addConcept()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
+                    </div>
+                    <div id="concepts-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Section B Feedback Statements -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-white text-base">⚙️ Section B: Learning Experience Statements</h3>
+                        <p class="text-xs text-slate-400 mt-1">Tailor the statements students rate regarding today's lesson.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-feedback-input" placeholder="e.g. I had enough speaking practice." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <button onclick="addFeedbackQuestion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add</button>
+                    </div>
+                    <div id="feedback-questions-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Add New Class -->
+    <!-- Modal: Add Class -->
     <div id="class-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
             <h3 class="font-bold text-white text-base">Add New Class</h3>
@@ -94,10 +134,10 @@
         </div>
     </div>
 
-    <!-- Modal: Create Poll for Current Class -->
+    <!-- Modal: New Topic -->
     <div id="poll-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
-            <h3 class="font-bold text-white text-base">Update Topic / New Poll for Active Class</h3>
+            <h3 class="font-bold text-white text-base">Update Topic Title</h3>
             <form id="create-poll-form" class="space-y-4 text-xs">
                 <div>
                     <label class="block text-slate-300 font-medium mb-1">New Lesson Topic Title:</label>
@@ -124,8 +164,17 @@
     <script>
         function getClasses() {
             return JSON.parse(localStorage.getItem('welsh_classes') || 'null') || [
-                { id: 'class-1', name: 'Blwyddyn 8 - Cymraeg Ail Iaith', topicTitle: 'Treigladau a’r Amser Gorffennol', concepts: ["Treigladau", "Amser Gorffennol", "Berfau"] },
-                { id: 'class-2', name: 'Year 10 GCSE Welsh', topicTitle: 'Patrymau Iaith a Geirfa', concepts: ["Patrymau Iaith", "Ymarfer Siarad"] }
+                { 
+                    id: 'class-1', 
+                    name: 'Blwyddyn 8 - Cymraeg Ail Iaith', 
+                    topicTitle: 'Treigladau a’r Amser Gorffennol', 
+                    concepts: ["Treigladau (Mutations)", "Amser Gorffennol (Past Tense)", "Berfau a Rhagenwau"],
+                    feedbackQuestions: [
+                        "The explanations were clear.",
+                        "The examples helped me understand.",
+                        "The pace felt right."
+                    ]
+                }
             ];
         }
 
@@ -137,9 +186,21 @@
             document.getElementById(id).classList.toggle('hidden', !show);
         }
 
+        function switchTab(tab) {
+            const isAnalytics = tab === 'analytics';
+            document.getElementById('section-analytics').classList.toggle('hidden', !isAnalytics);
+            document.getElementById('section-config').classList.toggle('hidden', isAnalytics);
+            document.getElementById('tab-analytics').className = isAnalytics ? 'pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400' : 'pb-3 font-semibold text-slate-400 hover:text-slate-200';
+            document.getElementById('tab-config').className = !isAnalytics ? 'pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400' : 'pb-3 font-semibold text-slate-400 hover:text-slate-200';
+            if (!isAnalytics) loadConfigTab();
+        }
+
         function switchClass(classId) {
             localStorage.setItem('welsh_active_class_id', classId);
             loadDashboard();
+            if (!document.getElementById('section-config').classList.contains('hidden')) {
+                loadConfigTab();
+            }
         }
 
         function showQRModal() {
@@ -162,7 +223,6 @@
             const classes = getClasses();
             const activeId = getActiveClassId();
             
-            // Populate Dropdown
             const selector = document.getElementById('class-selector');
             selector.innerHTML = '';
             classes.forEach(c => {
@@ -177,7 +237,6 @@
             document.getElementById('hdr-topic').innerText = currentClass.topicTitle;
             document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
-            // Load submissions for this class only
             const allSubs = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
             const subs = allSubs.filter(s => s.classId === activeId);
 
@@ -213,7 +272,94 @@
             }
         }
 
-        // Add Class Handler
+        function loadConfigTab() {
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            const currentClass = classes.find(c => c.id === activeId);
+
+            // Render Concepts
+            const conceptsList = document.getElementById('concepts-list');
+            conceptsList.innerHTML = '';
+            (currentClass.concepts || []).forEach((con, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900 p-2.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-200';
+                item.innerHTML = `<span>${con}</span> <button onclick="removeConcept(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-2">Delete</button>`;
+                conceptsList.appendChild(item);
+            });
+
+            // Render Feedback Questions
+            const fbList = document.getElementById('feedback-questions-list');
+            fbList.innerHTML = '';
+            (currentClass.feedbackQuestions || []).forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900 p-2.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-200';
+                item.innerHTML = `<span>${q}</span> <button onclick="removeFeedbackQuestion(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-2">Delete</button>`;
+                fbList.appendChild(item);
+            });
+        }
+
+        function addConcept() {
+            const input = document.getElementById('new-concept-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            classes.forEach(c => {
+                if (c.id === activeId) {
+                    if (!c.concepts) c.concepts = [];
+                    c.concepts.push(val);
+                }
+            });
+
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
+            input.value = '';
+            loadConfigTab();
+        }
+
+        function removeConcept(index) {
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            classes.forEach(c => {
+                if (c.id === activeId) {
+                    c.concepts.splice(index, 1);
+                }
+            });
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
+            loadConfigTab();
+        }
+
+        function addFeedbackQuestion() {
+            const input = document.getElementById('new-feedback-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            classes.forEach(c => {
+                if (c.id === activeId) {
+                    if (!c.feedbackQuestions) c.feedbackQuestions = [];
+                    c.feedbackQuestions.push(val);
+                }
+            });
+
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
+            input.value = '';
+            loadConfigTab();
+        }
+
+        function removeFeedbackQuestion(index) {
+            const classes = getClasses();
+            const activeId = getActiveClassId();
+            classes.forEach(c => {
+                if (c.id === activeId) {
+                    c.feedbackQuestions.splice(index, 1);
+                }
+            });
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
+            loadConfigTab();
+        }
+
         document.getElementById('create-class-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('new-class-name').value;
@@ -224,7 +370,8 @@
                 id: 'class-' + Date.now(),
                 name,
                 topicTitle,
-                concepts: ["Treigladau", "Amser Gorffennol", "Berfau a Rhagenwau", "Patrymau Iaith"]
+                concepts: ["Treigladau", "Amser Gorffennol", "Berfau a Rhagenwau"],
+                feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
             };
 
             classes.push(newClass);
@@ -235,19 +382,17 @@
             loadDashboard();
         });
 
-        // Update Topic Handler
         document.getElementById('create-poll-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const newTopic = document.getElementById('poll-topic-title').value;
             const classes = getClasses();
             const activeId = getActiveClassId();
 
-            const updated = classes.map(c => {
+            classes.forEach(c => {
                 if (c.id === activeId) c.topicTitle = newTopic;
-                return c;
             });
 
-            localStorage.setItem('welsh_classes', JSON.stringify(updated));
+            localStorage.setItem('welsh_classes', JSON.stringify(classes));
             toggleModal('poll-modal', false);
             loadDashboard();
         });
