@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tocyn Allan - Exit Ticket</title>
+    <title>Tocyn Allan - Student Exit Ticket</title>
     <script>
         console.warn = (function(oldWarn) {
             return function(msg) {
@@ -19,9 +19,9 @@
     <div id="app" class="w-full max-w-xl">
         <div id="form-container" class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
             <div class="border-b border-slate-700 pb-4">
-                <span id="class-badge" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dosbarth</span>
+                <span id="class-badge" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">Dosbarth Cymraeg</span>
                 <h1 id="poll-topic" class="text-xl font-bold text-white mt-2">Tocyn Allan / Exit Ticket</h1>
-                <p id="poll-subject" class="text-xs text-slate-400">Welsh Language Exit Ticket</p>
+                <p class="text-xs text-slate-400">Welsh Language Exit Ticket</p>
             </div>
 
             <form id="ticket-form" class="space-y-6">
@@ -47,7 +47,6 @@
                     <div>
                         <label class="block text-xs text-slate-300 mb-1">Which part felt most difficult today?</label>
                         <select id="difficultConcept" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                            <!-- Populated dynamically -->
                         </select>
                     </div>
 
@@ -61,6 +60,12 @@
                     </div>
                 </div>
 
+                <div class="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
+                    <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Section B: Profiad Dysgu / Learning Experience</h2>
+                    <div id="feedback-questions-container" class="space-y-3">
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/30">
                     Cyflwyno / Submit Exit Ticket
                 </button>
@@ -70,7 +75,7 @@
         <div id="success-container" class="hidden bg-slate-800 p-8 rounded-2xl border border-emerald-500/30 text-center space-y-4 shadow-2xl">
             <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
             <h2 class="text-xl font-bold text-white">Diolch! Response Submitted!</h2>
-            <p class="text-sm text-slate-400">Your feedback has been sent to your teacher's dashboard.</p>
+            <p class="text-sm text-slate-400">Your feedback has been saved locally.</p>
             <button onclick="resetForm()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded-xl transition">
                 Submit Another Response
             </button>
@@ -80,6 +85,7 @@
     <script>
         let selectedConfidence = 3;
         let selectedExplain = 'Almost';
+        let feedbackRatings = {};
 
         function getUrlClassId() {
             const params = new URLSearchParams(window.location.search);
@@ -87,24 +93,64 @@
         }
 
         function loadPoll() {
-            const classes = JSON.parse(localStorage.getItem('welsh_classes') || 'null') || [
-                { id: 'class-1', name: 'Blwyddyn 8 - Cymraeg Ail Iaith', topicTitle: 'Treigladau a’r Amser Gorffennol', concepts: ["Treigladau", "Amser Gorffennol", "Berfau"] },
-                { id: 'class-2', name: 'Year 10 GCSE Welsh', topicTitle: 'Patrymau Iaith a Geirfa', concepts: ["Patrymau Iaith", "Ymarfer Siarad"] }
-            ];
-
+            const classes = JSON.parse(localStorage.getItem('welsh_classes') || '[]');
             const urlClassId = getUrlClassId();
-            const currentClass = classes.find(c => c.id === urlClassId) || classes[0];
+
+            let currentClass = classes.find(c => c.id === urlClassId);
+            
+            if (!currentClass) {
+                currentClass = classes.length > 0 ? classes[0] : {
+                    id: 'default-class',
+                    name: 'Dysgu Cymraeg',
+                    topicTitle: 'Exit Ticket',
+                    concepts: ["Grammar Rules & Patterns", "Vocabulary & Pronunciation", "Verb Tenses"],
+                    feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
+                };
+            }
 
             document.getElementById('class-badge').innerText = currentClass.name;
             document.getElementById('poll-topic').innerText = currentClass.topicTitle;
 
             const conceptSelect = document.getElementById('difficultConcept');
             conceptSelect.innerHTML = '';
-            currentClass.concepts.forEach(c => {
+            (currentClass.concepts || []).forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.innerText = c;
                 conceptSelect.appendChild(opt);
+            });
+
+            const fbContainer = document.getElementById('feedback-questions-container');
+            fbContainer.innerHTML = '';
+            feedbackRatings = {};
+
+            (currentClass.feedbackQuestions || []).forEach((q, idx) => {
+                feedbackRatings[idx] = 4;
+                const row = document.createElement('div');
+                row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-b border-slate-800 pb-2 last:border-b-0';
+                row.innerHTML = `
+                    <span class="text-slate-300 flex-1">${q}</span>
+                    <div class="flex gap-1 justify-end" data-qindex="${idx}">
+                        <button type="button" onclick="setRating(${idx}, 1)" class="rate-btn-${idx} w-6 h-6 rounded text-[10px] font-bold border bg-slate-900 text-slate-400 border-slate-700">1</button>
+                        <button type="button" onclick="setRating(${idx}, 2)" class="rate-btn-${idx} w-6 h-6 rounded text-[10px] font-bold border bg-slate-900 text-slate-400 border-slate-700">2</button>
+                        <button type="button" onclick="setRating(${idx}, 3)" class="rate-btn-${idx} w-6 h-6 rounded text-[10px] font-bold border bg-slate-900 text-slate-400 border-slate-700">3</button>
+                        <button type="button" onclick="setRating(${idx}, 4)" class="rate-btn-${idx} w-6 h-6 rounded text-[10px] font-bold border bg-slate-200 text-slate-900 border-white">4</button>
+                        <button type="button" onclick="setRating(${idx}, 5)" class="rate-btn-${idx} w-6 h-6 rounded text-[10px] font-bold border bg-slate-900 text-slate-400 border-slate-700">5</button>
+                    </div>
+                `;
+                fbContainer.appendChild(row);
+            });
+        }
+
+        function setRating(qIndex, score) {
+            feedbackRatings[qIndex] = score;
+            document.querySelectorAll(`.rate-btn-${qIndex}`).forEach(btn => {
+                const val = parseInt(btn.innerText);
+                if (val === score) {
+                    btn.className = `rate-btn-${qIndex} w-6 h-6 rounded text-[10px] font-bold border bg-slate-200 text-slate-900 border-white`;
+                } else {
+                    btn.className = `rate-btn-${qIndex} w-6 h-6 rounded text-[10px] font-bold border bg-slate-900 text-slate-400 border-slate-700`;
+                }
             });
         }
 
@@ -132,7 +178,7 @@
             e.preventDefault();
             const studentName = document.getElementById('studentName').value;
             const difficultConcept = document.getElementById('difficultConcept').value;
-            const classId = getUrlClassId() || JSON.parse(localStorage.getItem('welsh_classes'))[0].id;
+            const classId = getUrlClassId() || 'default-class';
 
             const newSub = {
                 id: 'sub-' + Date.now(),
@@ -141,6 +187,7 @@
                 confidence: selectedConfidence,
                 difficultConcept,
                 canExplain: selectedExplain,
+                feedbackRatings,
                 timestamp: new Date().toISOString()
             };
 
