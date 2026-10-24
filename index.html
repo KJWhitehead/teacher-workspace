@@ -98,15 +98,27 @@
 
             let currentClass = classes.find(c => c.id === urlClassId);
             
-            if (!currentClass) {
-                currentClass = classes.length > 0 ? classes[0] : {
-                    id: 'default-class',
-                    name: 'Dysgu Cymraeg',
-                    topicTitle: 'Exit Ticket',
-                    concepts: ["Grammar Rules & Patterns", "Vocabulary & Pronunciation", "Verb Tenses"],
-                    feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
-                };
-            }
+if (!currentClass) {
+    currentClass = classes.length > 0 ? classes[0] : {
+        id: 'default-class',
+        name: 'Dysgu Cymraeg',
+        topicTitle: 'Exit Ticket',
+        concepts: [
+            "Treiglad Meddal (Soft Mutation)",
+            "Treiglad Trwynol / Lledneis (Nasal/Aspirate)",
+            "Amser Presennol (Present Tense)",
+            "Amser Gorffennol (Past Tense - wnes i / roedd)",
+            "Amser Dyfodol (Future Tense - bydda i)",
+            "Geirfa ac Ymadroddion Newydd (New Vocab)",
+            "Sentences with 'Er mwyn' / 'Achos'"
+        ],
+        feedbackQuestions: [
+            "The explanations were clear.",
+            "The examples helped me understand.",
+            "The pace felt right."
+        ]
+    };
+}
 
             document.getElementById('class-badge').innerText = currentClass.name;
             document.getElementById('poll-topic').innerText = currentClass.topicTitle;
