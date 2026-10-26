@@ -11,6 +11,9 @@
                 oldWarn.apply(console, arguments);
             };
         })(console.warn);
+        const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
+const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -192,7 +195,7 @@
             const difficultConcept = document.getElementById('difficultConcept').value;
             const classId = getUrlClassId() || 'default-class';
 
-            const { error } = await supabase.from('exit_tickets').insert([
+            const { error } = await dbClient.from('exit_tickets').insert([
                 {
                     class_id: classId,
                     student_name: studentName,
