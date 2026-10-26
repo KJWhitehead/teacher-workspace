@@ -11,6 +11,11 @@
                 oldWarn.apply(console, arguments);
             };
         })(console.warn);
+        const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
+    
+    // RENAMED to dbClient to prevent collision:
+    const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -310,7 +315,7 @@
             document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
             // Fetch live remote submissions from Supabase
-            const { data: subs, error } = await supabase
+            const { data: subs, error } = await dbClient
                 .from('exit_tickets')
                 .select('*')
                 .eq('class_id', activeId)
@@ -474,7 +479,7 @@
         async function clearSubmissions() {
             if (confirm("Reset student responses for this class in Supabase?")) {
                 const activeId = getActiveClassId();
-                await supabase.from('exit_tickets').delete().eq('class_id', activeId);
+                await dbClient.from('exit_tickets').delete().eq('class_id', activeId);
                 loadDashboard();
             }
         }
