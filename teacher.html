@@ -14,8 +14,16 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6">
+
+    <script>
+        // PASTE YOUR SUPABASE KEYS HERE:
+        const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co/rest/v1/";
+        const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
 
     <!-- FIRST TIME SETUP VIEW -->
     <div id="onboarding-container" class="hidden max-w-md mx-auto my-12 bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6 text-center">
@@ -46,7 +54,7 @@
         <header class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">TEACHER WORKSPACE</span>
+                    <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">LIVE REMOTE WORKSPACE</span>
                     <h1 id="hdr-class-name" class="text-xl font-bold text-white">--</h1>
                 </div>
                 <p class="text-xs text-slate-400 mt-1">Active Poll Topic: <span id="hdr-topic" class="text-emerald-400 font-semibold">--</span></p>
@@ -104,7 +112,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: QUESTION & CONCEPT CONFIGURATOR -->
+        <!-- TAB 2: CONFIGURATOR -->
         <div id="section-config" class="hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
                 <div>
@@ -115,16 +123,15 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Section A Questions -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section A Questions</span>
                         <h3 class="font-bold text-white text-base mt-2">Understanding & Concept Dropdown</h3>
-                        <p class="text-xs text-slate-400 mt-1">Students are asked: <i>"How confident do you feel today (1-5)?"</i> and <i>"Which part was most difficult?"</i></p>
+                        <p class="text-xs text-slate-400 mt-1">Students select their main difficulty from this list.</p>
                     </div>
 
                     <div class="space-y-3 pt-2">
-                        <label class="block text-xs font-semibold text-slate-300">Difficult Concepts List (Dropdown options for students):</label>
+                        <label class="block text-xs font-semibold text-slate-300">Difficult Concepts List:</label>
                         <div class="flex gap-2">
                             <input type="text" id="new-concept-input" placeholder="e.g. Treiglad Meddal" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                             <button onclick="addConcept()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 rounded-xl">Add Concept</button>
@@ -133,15 +140,13 @@
                     </div>
                 </div>
 
-                <!-- Section B Questions with Presets -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section B Questions</span>
                         <h3 class="font-bold text-white text-base mt-2">Learning Experience Statements</h3>
-                        <p class="text-xs text-slate-400 mt-1">Students rate each statement on a 1–5 scale on their ticket.</p>
+                        <p class="text-xs text-slate-400 mt-1">Students rate each statement on a 1–5 scale.</p>
                     </div>
 
-                    <!-- Quick Template Presets -->
                     <div class="space-y-2 pt-1">
                         <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Load Quick Template:</label>
                         <div class="flex flex-wrap gap-2">
@@ -151,7 +156,6 @@
                         </div>
                     </div>
 
-                    <!-- Custom Statement Input & Active List -->
                     <div class="space-y-3 pt-2">
                         <label class="block text-xs font-semibold text-slate-300">Active Rating Statements:</label>
                         <div class="flex gap-2">
@@ -186,16 +190,15 @@
         </div>
     </div>
 
-    <!-- Modal: Publish New Poll -->
+    <!-- Modal: Publish Poll -->
     <div id="poll-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
             <h3 class="font-bold text-white text-base">Publish New Poll for Active Class</h3>
             <form id="publish-poll-form" class="space-y-4 text-xs">
                 <div>
                     <label class="block text-slate-300 font-medium mb-1">New Poll / Topic Title:</label>
-                    <input type="text" id="poll-topic-input" required placeholder="e.g. Amser Dyfodol (Future Tense)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
+                    <input type="text" id="poll-topic-input" required placeholder="e.g. Amser Dyfodol" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
                 </div>
-                <p class="text-[11px] text-slate-400">Publishing an updated topic title will immediately reflect on the exit ticket when students in this class scan the QR code.</p>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="toggleModal('poll-modal', false)" class="flex-1 bg-slate-700 text-white font-bold py-2.5 rounded-xl">Cancel</button>
                     <button type="submit" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl">Publish Poll</button>
@@ -217,12 +220,10 @@
     <script>
         const DEFAULT_CONCEPTS = [
             "Treiglad Meddal (Soft Mutation)",
-            "Treiglad Trwynol / Lledneis (Nasal/Aspirate)",
+            "Treiglad Trwynol / Lledneis",
             "Amser Presennol (Present Tense)",
-            "Amser Gorffennol (Past Tense - wnes i / roedd)",
-            "Amser Dyfodol (Future Tense - bydda i)",
-            "Geirfa ac Ymadroddion Newydd (New Vocab)",
-            "Sentences with 'Er mwyn' / 'Achos'"
+            "Amser Gorffennol (Past Tense)",
+            "Amser Dyfodol (Future Tense)"
         ];
 
         const DEFAULT_FEEDBACK = [
@@ -279,7 +280,7 @@
             new QRCode(qrContainer, { text: studentUrl, width: 180, height: 180 });
         }
 
-        function loadDashboard() {
+        async function loadDashboard() {
             const classes = getClasses();
 
             if (classes.length === 0) {
@@ -308,12 +309,21 @@
             document.getElementById('hdr-topic').innerText = currentClass.topicTitle;
             document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
-            const allSubs = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
-            const subs = allSubs.filter(s => s.classId === activeId);
+            // Fetch live remote submissions from Supabase
+            const { data: subs, error } = await supabase
+                .from('exit_tickets')
+                .select('*')
+                .eq('class_id', activeId)
+                .order('created_at', { ascending: false });
 
-            document.getElementById('stat-total').innerText = subs.length;
+            if (error) {
+                console.error("Supabase error:", error);
+                return;
+            }
 
-            if (subs.length > 0) {
+            document.getElementById('stat-total').innerText = subs ? subs.length : 0;
+
+            if (subs && subs.length > 0) {
                 const avg = (subs.reduce((a, b) => a + Number(b.confidence), 0) / subs.length).toFixed(1);
                 document.getElementById('stat-avg').innerText = avg + ' / 5.0';
                 
@@ -327,8 +337,8 @@
                     card.className = 'bg-slate-900 p-3.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs';
                     card.innerHTML = `
                         <div>
-                            <span class="font-bold text-white text-sm">${s.studentName}</span>
-                            <p class="text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficultConcept}</span></p>
+                            <span class="font-bold text-white text-sm">${s.student_name}</span>
+                            <p class="text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficult_concept}</span></p>
                         </div>
                         <span class="px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
                             Conf: ${s.confidence}/5
@@ -352,7 +362,6 @@
 
             document.getElementById('config-class-label').innerText = currentClass.name;
 
-            // Render Section A Concepts
             const conceptsList = document.getElementById('concepts-list');
             conceptsList.innerHTML = '';
             (currentClass.concepts || []).forEach((con, index) => {
@@ -362,7 +371,6 @@
                 conceptsList.appendChild(item);
             });
 
-            // Render Section B Questions
             const fbList = document.getElementById('feedback-questions-list');
             fbList.innerHTML = '';
             (currentClass.feedbackQuestions || []).forEach((q, index) => {
@@ -375,29 +383,15 @@
 
         function loadFeedbackPreset(type) {
             const presets = {
-                standard: [
-                    "The explanations were clear.",
-                    "The examples helped me understand.",
-                    "The pace felt right."
-                ],
-                speaking: [
-                    "I felt confident speaking Welsh out loud today.",
-                    "Partner/group work helped me practice new vocabulary.",
-                    "I had enough time to practice my pronunciation."
-                ],
-                grammar: [
-                    "I understand when and why to apply this rule.",
-                    "Word mats/examples helped me check my work.",
-                    "I feel confident using this rule independently."
-                ]
+                standard: ["The explanations were clear.", "The examples helped me understand.", "The pace felt right."],
+                speaking: ["I felt confident speaking Welsh out loud today.", "Partner/group work helped me practice new vocabulary.", "I had enough time to practice my pronunciation."],
+                grammar: ["I understand when and why to apply this rule.", "Word mats/examples helped me check my work.", "I feel confident using this rule independently."]
             };
 
             const classes = getClasses();
             const activeId = getActiveClassId();
             classes.forEach(c => {
-                if (c.id === activeId) {
-                    c.feedbackQuestions = [...presets[type]];
-                }
+                if (c.id === activeId) c.feedbackQuestions = [...presets[type]];
             });
 
             localStorage.setItem('welsh_classes', JSON.stringify(classes));
@@ -477,6 +471,24 @@
             }
         }
 
+        async function clearSubmissions() {
+            if (confirm("Reset student responses for this class in Supabase?")) {
+                const activeId = getActiveClassId();
+                await supabase.from('exit_tickets').delete().eq('class_id', activeId);
+                loadDashboard();
+            }
+        }
+
+        function deleteCurrentClass() {
+            if (confirm("Are you sure you want to delete this class?")) {
+                const activeId = getActiveClassId();
+                const classes = getClasses().filter(c => c.id !== activeId);
+                localStorage.setItem('welsh_classes', JSON.stringify(classes));
+                localStorage.removeItem('welsh_active_class_id');
+                loadDashboard();
+            }
+        }
+
         document.getElementById('onboarding-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('onboard-class-name').value;
@@ -532,27 +544,7 @@
             loadDashboard();
         });
 
-        function clearSubmissions() {
-            if (confirm("Reset student responses for this class?")) {
-                const activeId = getActiveClassId();
-                const allSubs = JSON.parse(localStorage.getItem('welsh_et_submissions') || '[]');
-                const filtered = allSubs.filter(s => s.classId !== activeId);
-                localStorage.setItem('welsh_et_submissions', JSON.stringify(filtered));
-                loadDashboard();
-            }
-        }
-
-        function deleteCurrentClass() {
-            if (confirm("Are you sure you want to delete this class?")) {
-                const activeId = getActiveClassId();
-                const classes = getClasses().filter(c => c.id !== activeId);
-                localStorage.setItem('welsh_classes', JSON.stringify(classes));
-                localStorage.removeItem('welsh_active_class_id');
-                loadDashboard();
-            }
-        }
-
-        setInterval(loadDashboard, 2000);
+        setInterval(loadDashboard, 3000);
         loadDashboard();
     </script>
 </body>
