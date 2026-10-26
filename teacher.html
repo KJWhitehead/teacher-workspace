@@ -11,15 +11,11 @@
                 oldWarn.apply(console, arguments);
             };
         })(console.warn);
-        const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co/rest/v1/";
-    const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
-    
-    // RENAMED to dbClient to prevent collision:
-    const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Correct UMD Supabase Script CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6">
 
@@ -27,7 +23,9 @@
         // PASTE YOUR SUPABASE KEYS HERE:
         const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co/rest/v1/";
         const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Initialize client using global 'supabase' from UMD build
+        const dbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
 
     <!-- FIRST TIME SETUP VIEW -->
