@@ -13,7 +13,6 @@
         })(console.warn);
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Correct UMD Supabase Script CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6 flex justify-center items-center">
@@ -23,7 +22,6 @@
         const SUPABASE_URL = "https://izffsjjtjconjwypogqb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_IGCowO7Vf0mId9X8C8n9iw_DpR-6ZP-";
         
-        // Initialize client using global 'supabase' from UMD build
         const dbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
 
@@ -103,24 +101,25 @@
             return params.get('class');
         }
 
-        function loadPoll() {
-            const classes = JSON.parse(localStorage.getItem('welsh_classes') || '[]');
-            const urlClassId = getUrlClassId();
+        async function loadPoll() {
+            const urlClassId = getUrlClassId() || 'default-class';
 
-            let currentClass = classes.find(c => c.id === urlClassId);
-            
-            if (!currentClass) {
-                currentClass = classes.length > 0 ? classes[0] : {
-                    id: 'default-class',
-                    name: 'Dysgu Cymraeg',
-                    topicTitle: 'Exit Ticket',
-                    concepts: ["Treiglad Meddal", "Amser Presennol", "Amser Gorffennol", "Amser Dyfodol"],
-                    feedbackQuestions: ["The explanations were clear.", "The examples helped me understand."]
-                };
-            }
+            // Fetch class details and custom questions live from Supabase
+            const { data: classData, error } = await dbClient
+                .from('classes')
+                .select('*')
+                .eq('id', urlClassId)
+                .single();
+
+            const currentClass = classData || {
+                name: 'Dysgu Cymraeg',
+                topic_title: 'Exit Ticket',
+                concepts: ["Treiglad Meddal", "Amser Presennol", "Amser Gorffennol", "Amser Dyfodol"],
+                feedback_questions: ["The explanations were clear.", "The examples helped me understand."]
+            };
 
             document.getElementById('class-badge').innerText = currentClass.name;
-            document.getElementById('poll-topic').innerText = currentClass.topicTitle;
+            document.getElementById('poll-topic').innerText = currentClass.topic_title;
 
             const conceptSelect = document.getElementById('difficultConcept');
             conceptSelect.innerHTML = '';
@@ -135,7 +134,7 @@
             fbContainer.innerHTML = '';
             feedbackRatings = {};
 
-            (currentClass.feedbackQuestions || []).forEach((q, idx) => {
+            (currentClass.feedback_questions || []).forEach((q, idx) => {
                 feedbackRatings[idx] = 4;
                 const row = document.createElement('div');
                 row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-b border-slate-800 pb-2 last:border-b-0';
