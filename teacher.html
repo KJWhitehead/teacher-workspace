@@ -483,23 +483,33 @@
             }
         }
 
-        document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('onboard-class-name').value;
-            const topic_title = document.getElementById('onboard-topic-title').value;
+document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('onboard-class-name').value;
+    const topic_title = document.getElementById('onboard-topic-title').value;
+    const newId = 'class-' + Date.now();
 
-            const newClass = {
-                id: 'class-' + Date.now(),
-                name,
-                topic_title,
-                concepts: [...DEFAULT_CONCEPTS],
-                feedback_questions: [...DEFAULT_FEEDBACK]
-            };
+    const { data, error } = await dbClient.from('classes').insert([
+        {
+            id: newId,
+            name: name,
+            topic_title: topic_title,
+            concepts: DEFAULT_CONCEPTS,
+            feedback_questions: DEFAULT_FEEDBACK
+        }
+    ]);
 
-            await dbClient.from('classes').insert([newClass]);
-            localStorage.setItem('welsh_active_class_id', newClass.id);
-            await loadDashboard();
-        });
+    if (error) {
+        alert("Failed to create class: " + error.message);
+        console.error("Onboarding error:", error);
+        return;
+    }
+
+    // Save active class ID and reload view
+    localStorage.setItem('welsh_active_class_id', newId);
+    await loadDashboard();
+});
 
         document.getElementById('create-class-form').addEventListener('submit', async (e) => {
             e.preventDefault();
