@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Workspace - Class & Poll Manager</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <script>
         console.warn = (function(oldWarn) {
             return function(msg) {
@@ -15,7 +16,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6">
 
@@ -77,7 +77,7 @@
         </header>
 
         <div class="flex border-b border-slate-800 space-x-6 text-sm">
-            <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Student Responses & Stats</button>
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="pb-3 font-semibold border-b-2 border-emerald-500 text-emerald-400">1. Student Responses & Analytics</button>
             <button onclick="switchTab('config')" id="tab-config" class="pb-3 font-semibold text-slate-400 hover:text-slate-200">2. View & Tailor Questions</button>
         </div>
 
@@ -99,14 +99,23 @@
             </div>
 
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-wrap justify-between items-center gap-4">
                     <h3 id="table-title" class="font-bold text-white">Responses for Selected Class</h3>
-                    <div class="flex gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400">Filter Student:</span>
+                            <select id="student-filter" onchange="renderSubmissionsList()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 outline-none">
+                                <option value="ALL">All Students</option>
+                            </select>
+                        </div>
                         <button onclick="deleteCurrentClass()" class="text-xs text-slate-400 hover:text-rose-400">Delete Class</button>
-                        <button onclick="clearSubmissions()" class="text-xs text-rose-400 hover:text-rose-300">Reset Class Responses</button>
+                        <button onclick="clearSubmissions()" class="text-xs text-rose-400 hover:text-rose-300">Reset All Responses</button>
                     </div>
                 </div>
-                <div id="submissions-list" class="space-y-2 max-h-96 overflow-y-auto">
+
+                <p class="text-[11px] text-slate-400 italic">Tip: Click on any student card to expand their full breakdown, or click 'Delete Entry' to remove accidental duplicates.</p>
+
+                <div id="submissions-list" class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
                     <p class="text-xs text-slate-500 italic py-4">No student responses yet for this class.</p>
                 </div>
             </div>
@@ -127,9 +136,7 @@
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section A Questions</span>
                         <h3 class="font-bold text-white text-base mt-2">Understanding & Concept Dropdown</h3>
-                        <p class="text-xs text-slate-400 mt-1">Students select their main difficulty from this list.</p>
                     </div>
-
                     <div class="space-y-3 pt-2">
                         <label class="block text-xs font-semibold text-slate-300">Difficult Concepts List:</label>
                         <div class="flex gap-2">
@@ -144,9 +151,7 @@
                     <div>
                         <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Section B Questions</span>
                         <h3 class="font-bold text-white text-base mt-2">Learning Experience Statements</h3>
-                        <p class="text-xs text-slate-400 mt-1">Students rate each statement on a 1–5 scale.</p>
                     </div>
-
                     <div class="space-y-2 pt-1">
                         <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Load Quick Template:</label>
                         <div class="flex flex-wrap gap-2">
@@ -155,7 +160,6 @@
                             <button type="button" onclick="loadFeedbackPreset('grammar')" class="bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 font-medium px-3 py-1.5 rounded-lg transition">Grammar Focus</button>
                         </div>
                     </div>
-
                     <div class="space-y-3 pt-2">
                         <label class="block text-xs font-semibold text-slate-300">Active Rating Statements:</label>
                         <div class="flex gap-2">
@@ -231,6 +235,7 @@
         ];
 
         let cachedClasses = [];
+        let cachedSubmissions = [];
 
         function getActiveClassId() {
             const savedId = localStorage.getItem('welsh_active_class_id');
@@ -275,7 +280,6 @@
         }
 
         async function loadDashboard() {
-            // Fetch classes from Supabase
             const { data: classesData, error } = await dbClient.from('classes').select('*');
             if (error) {
                 console.error("Error loading classes:", error);
@@ -309,7 +313,6 @@
             document.getElementById('hdr-topic').innerText = currentClass.topic_title;
             document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
-            // Fetch submissions from Supabase
             const { data: subs, error: subError } = await dbClient
                 .from('exit_tickets')
                 .select('*')
@@ -321,35 +324,131 @@
                 return;
             }
 
-            document.getElementById('stat-total').innerText = subs ? subs.length : 0;
+            cachedSubmissions = subs || [];
+            updateStudentFilterDropdown();
+            renderSubmissionsList();
+        }
 
-            if (subs && subs.length > 0) {
-                const avg = (subs.reduce((a, b) => a + Number(b.confidence), 0) / subs.length).toFixed(1);
+        function updateStudentFilterDropdown() {
+            const filterSelect = document.getElementById('student-filter');
+            const currentSelection = filterSelect.value;
+            
+            // Get unique student names
+            const names = [...new Set(cachedSubmissions.map(s => s.student_name))].sort();
+            
+            filterSelect.innerHTML = '<option value="ALL">All Students</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = name;
+                if (name === currentSelection) opt.selected = true;
+                filterSelect.appendChild(opt);
+            });
+        }
+
+        function renderSubmissionsList() {
+            const totalCount = cachedSubmissions.length;
+            document.getElementById('stat-total').innerText = totalCount;
+
+            if (totalCount > 0) {
+                const avg = (cachedSubmissions.reduce((a, b) => a + Number(b.confidence), 0) / totalCount).toFixed(1);
                 document.getElementById('stat-avg').innerText = avg + ' / 5.0';
                 
-                const flagged = subs.filter(s => Number(s.confidence) <= 2).length;
+                const flagged = cachedSubmissions.filter(s => Number(s.confidence) <= 2).length;
                 document.getElementById('stat-flagged').innerText = flagged;
-
-                const list = document.getElementById('submissions-list');
-                list.innerHTML = '';
-                subs.forEach(s => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-slate-900 p-3.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs';
-                    card.innerHTML = `
-                        <div>
-                            <span class="font-bold text-white text-sm">${s.student_name}</span>
-                            <p class="text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficult_concept}</span></p>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
-                            Conf: ${s.confidence}/5
-                        </span>
-                    `;
-                    list.appendChild(card);
-                });
             } else {
                 document.getElementById('stat-avg').innerText = '0.0 / 5.0';
                 document.getElementById('stat-flagged').innerText = '0';
-                document.getElementById('submissions-list').innerHTML = '<p class="text-xs text-slate-500 italic py-4">No student responses yet for this class.</p>';
+            }
+
+            const selectedFilter = document.getElementById('student-filter').value;
+            const filteredSubs = selectedFilter === 'ALL' 
+                ? cachedSubmissions 
+                : cachedSubmissions.filter(s => s.student_name === selectedFilter);
+
+            const list = document.getElementById('submissions-list');
+            list.innerHTML = '';
+
+            if (filteredSubs.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500 italic py-4">No student responses match this filter.</p>';
+                return;
+            }
+
+            const activeClass = cachedClasses.find(c => c.id === getActiveClassId());
+            const feedbackQuestions = activeClass ? (activeClass.feedback_questions || []) : [];
+
+            filteredSubs.forEach(s => {
+                const timeStr = new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                // Format feedback ratings dictionary nicely
+                let ratingsHtml = '';
+                if (s.feedback_ratings) {
+                    ratingsHtml = Object.entries(s.feedback_ratings).map(([qIdx, score]) => {
+                        const questionText = feedbackQuestions[qIdx] || `Statement ${parseInt(qIdx) + 1}`;
+                        return `<div class="flex justify-between items-center text-[11px] text-slate-300 py-0.5 border-b border-slate-800/60 last:border-b-0">
+                            <span class="pr-2">${questionText}</span>
+                            <span class="font-bold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${score}/5</span>
+                        </div>`;
+                    }).join('');
+                } else {
+                    ratingsHtml = '<span class="text-xs text-slate-500 italic">No ratings recorded.</span>';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900 rounded-xl border border-slate-700 overflow-hidden transition';
+                card.innerHTML = `
+                    <div class="p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-800/50" onclick="toggleCardDetail('${s.id}')">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white text-sm">${s.student_name}</span>
+                                    <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">${timeStr}</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficult_concept}</span> | Can Explain: <span class="text-slate-300">${s.can_explain || 'N/A'}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                                Conf: ${s.confidence}/5
+                            </span>
+                            <span class="text-slate-500 text-xs font-bold" id="chevron-${s.id}">▼</span>
+                        </div>
+                    </div>
+                    <!-- Collapsible Full Detail View -->
+                    <div id="detail-${s.id}" class="hidden bg-slate-950/60 border-t border-slate-800 p-4 space-y-3">
+                        <div>
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-500">Learning Experience Ratings:</span>
+                            <div class="mt-1 space-y-1 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                ${ratingsHtml}
+                            </div>
+                        </div>
+                        <div class="flex justify-end pt-1">
+                            <button onclick="deleteSubmission('${s.id}')" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                🗑️ Delete This Duplicate Entry
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function toggleCardDetail(id) {
+            const detailEl = document.getElementById(`detail-${id}`);
+            const chevronEl = document.getElementById(`chevron-${id}`);
+            const isHidden = detailEl.classList.contains('hidden');
+            detailEl.classList.toggle('hidden', !isHidden);
+            chevronEl.innerText = isHidden ? '▲' : '▼';
+        }
+
+        async function deleteSubmission(id) {
+            if (confirm("Are you sure you want to delete this specific student response?")) {
+                const { error } = await dbClient.from('exit_tickets').delete().eq('id', id);
+                if (error) {
+                    alert("Failed to delete entry: " + error.message);
+                    return;
+                }
+                await loadDashboard();
             }
         }
 
@@ -467,7 +566,7 @@
         }
 
         async function clearSubmissions() {
-            if (confirm("Reset student responses for this class in Supabase?")) {
+            if (confirm("Reset ALL student responses for this class in Supabase?")) {
                 const activeId = getActiveClassId();
                 await dbClient.from('exit_tickets').delete().eq('class_id', activeId);
                 await loadDashboard();
@@ -475,7 +574,7 @@
         }
 
         async function deleteCurrentClass() {
-            if (confirm("Are you sure you want to delete this class?")) {
+            if (confirm("Are you sure you want to delete this entire class?")) {
                 const activeId = getActiveClassId();
                 await dbClient.from('classes').delete().eq('id', activeId);
                 localStorage.removeItem('welsh_active_class_id');
@@ -483,33 +582,23 @@
             }
         }
 
-document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const name = document.getElementById('onboard-class-name').value;
-    const topic_title = document.getElementById('onboard-topic-title').value;
-    const newId = 'class-' + Date.now();
+        document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('onboard-class-name').value;
+            const topic_title = document.getElementById('onboard-topic-title').value;
 
-    const { data, error } = await dbClient.from('classes').insert([
-        {
-            id: newId,
-            name: name,
-            topic_title: topic_title,
-            concepts: DEFAULT_CONCEPTS,
-            feedback_questions: DEFAULT_FEEDBACK
-        }
-    ]);
+            const newClass = {
+                id: 'class-' + Date.now(),
+                name,
+                topic_title,
+                concepts: [...DEFAULT_CONCEPTS],
+                feedback_questions: [...DEFAULT_FEEDBACK]
+            };
 
-    if (error) {
-        alert("Failed to create class: " + error.message);
-        console.error("Onboarding error:", error);
-        return;
-    }
-
-    // Save active class ID and reload view
-    localStorage.setItem('welsh_active_class_id', newId);
-    await loadDashboard();
-});
+            await dbClient.from('classes').insert([newClass]);
+            localStorage.setItem('welsh_active_class_id', newClass.id);
+            await loadDashboard();
+        });
 
         document.getElementById('create-class-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -543,7 +632,7 @@ document.getElementById('onboarding-form').addEventListener('submit', async (e) 
             toggleModal('poll-modal', false);
         });
 
-        setInterval(loadDashboard, 3000);
+        setInterval(loadDashboard, 4000);
         loadDashboard();
     </script>
 </body>
