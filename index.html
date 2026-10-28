@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tocyn Allan - Student Exit Ticket</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <script>
         console.warn = (function(oldWarn) {
             return function(msg) {
@@ -14,7 +15,6 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-6 flex justify-center items-center">
 
@@ -85,10 +85,7 @@
         <div id="success-container" class="hidden bg-slate-800 p-8 rounded-2xl border border-emerald-500/30 text-center space-y-4 shadow-2xl">
             <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
             <h2 class="text-xl font-bold text-white">Diolch! Response Submitted!</h2>
-            <p class="text-sm text-slate-400">Your feedback has been sent to your teacher.</p>
-            <button onclick="resetForm()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded-xl transition">
-                Submit Another Response
-            </button>
+            <p class="text-sm text-slate-400">Your exit ticket has been successfully recorded. You can close this window.</p>
         </div>
     </div>
 
@@ -105,7 +102,6 @@
         async function loadPoll() {
             const urlClassId = getUrlClassId() || 'default-class';
 
-            // Fetch class details and custom questions live from Supabase
             const { data: classData, error } = await dbClient
                 .from('classes')
                 .select('*')
@@ -191,7 +187,7 @@
             btn.disabled = true;
             btn.innerText = "Submitting...";
 
-            const studentName = document.getElementById('studentName').value;
+            const studentName = document.getElementById('studentName').value.trim();
             const difficultConcept = document.getElementById('difficultConcept').value;
             const classId = getUrlClassId() || 'default-class';
 
@@ -206,24 +202,18 @@
                 }
             ]);
 
-            btn.disabled = false;
-            btn.innerText = "Cyflwyno / Submit Exit Ticket";
-
             if (error) {
                 alert("Submission failed. Please check your internet connection.");
                 console.error(error);
+                btn.disabled = false;
+                btn.innerText = "Cyflwyno / Submit Exit Ticket";
                 return;
             }
 
+            // Lockout view permanently to prevent accidental double submissions
             document.getElementById('form-container').classList.add('hidden');
             document.getElementById('success-container').classList.remove('hidden');
         });
-
-        function resetForm() {
-            document.getElementById('studentName').value = '';
-            document.getElementById('form-container').classList.remove('hidden');
-            document.getElementById('success-container').classList.add('hidden');
-        }
 
         loadPoll();
     </script>
