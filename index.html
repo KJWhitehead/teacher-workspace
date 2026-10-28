@@ -55,9 +55,19 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs text-slate-300 mb-1">Which part felt most difficult today?</label>
-                        <select id="difficultConcept" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                        </select>
+                        <label class="block text-xs text-slate-300 mb-1">Which part felt most difficult today? <span class="text-[10px] text-emerald-400 font-normal">(Select from options)</span></label>
+                        <div class="relative">
+                            <select id="difficultConcept" onchange="toggleOtherInput(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white appearance-none pr-10 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 text-xs">
+                                ▼
+                            </div>
+                        </div>
+
+                        <!-- Custom text box revealed when "Other" is chosen -->
+                        <div id="other-concept-container" class="hidden mt-2">
+                            <input type="text" id="otherConceptInput" placeholder="Please specify what you found difficult..." class="w-full bg-slate-900 border border-emerald-500/80 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none">
+                        </div>
                     </div>
 
                     <div>
@@ -99,6 +109,20 @@
             return params.get('class');
         }
 
+        function toggleOtherInput(val) {
+            const otherContainer = document.getElementById('other-concept-container');
+            const otherInput = document.getElementById('otherConceptInput');
+            if (val === 'OTHER_CUSTOM') {
+                otherContainer.classList.remove('hidden');
+                otherInput.required = true;
+                otherInput.focus();
+            } else {
+                otherContainer.classList.add('hidden');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        }
+
         async function loadPoll() {
             const urlClassId = getUrlClassId() || 'default-class';
 
@@ -120,12 +144,20 @@
 
             const conceptSelect = document.getElementById('difficultConcept');
             conceptSelect.innerHTML = '';
+            
+            // Add custom items
             (currentClass.concepts || []).forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.innerText = c;
                 conceptSelect.appendChild(opt);
             });
+
+            // Always add "Other / Arall" option at the bottom
+            const otherOpt = document.createElement('option');
+            otherOpt.value = 'OTHER_CUSTOM';
+            otherOpt.innerText = '✏️ Other / Arall... (Type your own)';
+            conceptSelect.appendChild(otherOpt);
 
             const fbContainer = document.getElementById('feedback-questions-container');
             fbContainer.innerHTML = '';
@@ -188,7 +220,15 @@
             btn.innerText = "Submitting...";
 
             const studentName = document.getElementById('studentName').value.trim();
-            const difficultConcept = document.getElementById('difficultConcept').value;
+            const selectedDropdown = document.getElementById('difficultConcept').value;
+            
+            // Resolve final difficult concept text
+            let finalConcept = selectedDropdown;
+            if (selectedDropdown === 'OTHER_CUSTOM') {
+                const customText = document.getElementById('otherConceptInput').value.trim();
+                finalConcept = customText ? `Other: ${customText}` : 'Other';
+            }
+
             const classId = getUrlClassId() || 'default-class';
 
             const { error } = await dbClient.from('exit_tickets').insert([
@@ -196,7 +236,7 @@
                     class_id: classId,
                     student_name: studentName,
                     confidence: selectedConfidence,
-                    difficult_concept: difficultConcept,
+                    difficult_concept: finalConcept,
                     can_explain: selectedExplain,
                     feedback_ratings: feedbackRatings
                 }
@@ -210,7 +250,6 @@
                 return;
             }
 
-            // Lockout view permanently to prevent accidental double submissions
             document.getElementById('form-container').classList.add('hidden');
             document.getElementById('success-container').classList.remove('hidden');
         });
