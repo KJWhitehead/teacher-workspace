@@ -119,9 +119,10 @@
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+            <!-- RESPONSES GROUPED BY LESSON / TOPIC -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-5">
                 <div class="flex flex-wrap justify-between items-center gap-4">
-                    <h3 id="table-title" class="font-bold text-white">Responses for Selected Class</h3>
+                    <h3 id="table-title" class="font-bold text-white text-base">Responses Organized by Lesson</h3>
                     <div class="flex items-center gap-3">
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-slate-400">Filter Student:</span>
@@ -134,9 +135,10 @@
                     </div>
                 </div>
 
-                <p class="text-[11px] text-slate-400 italic">Tip: Click on any student card to expand their full breakdown, or click 'Delete Entry' to remove accidental duplicates.</p>
+                <p class="text-[11px] text-slate-400 italic">Tip: Click on any student's name to view their complete historical progress across lessons, or expand cards to edit misspelled names.</p>
 
-                <div id="submissions-list" class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+                <!-- Container where lesson-by-lesson blocks are rendered -->
+                <div id="lessons-container" class="space-y-6">
                     <p class="text-xs text-slate-500 italic py-4">No student responses yet for this class.</p>
                 </div>
             </div>
@@ -191,6 +193,23 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- STUDENT HISTORY MODAL -->
+    <div id="student-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-xl w-full space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div>
+                    <span class="text-[10px] bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-800 uppercase">Student Timeline</span>
+                    <h3 id="modal-student-name" class="font-bold text-white text-base mt-1">--</h3>
+                </div>
+                <button onclick="toggleModal('student-modal', false)" class="text-slate-400 hover:text-white font-bold text-sm px-2">✕</button>
+            </div>
+            <div id="student-history-list" class="space-y-3 overflow-y-auto pr-1 flex-1">
+                <!-- Populated dynamically -->
+            </div>
+            <button onclick="toggleModal('student-modal', false)" class="w-full bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs">Close</button>
         </div>
     </div>
 
@@ -338,7 +357,6 @@
             const currentClass = cachedClasses.find(c => c.id === activeId) || cachedClasses[0];
             document.getElementById('hdr-class-name').innerText = currentClass.name;
             document.getElementById('hdr-topic').innerText = currentClass.topic_title;
-            document.getElementById('table-title').innerText = 'Responses for: ' + currentClass.name;
 
             const { data: subs, error: subError } = await dbClient
                 .from('exit_tickets')
@@ -448,68 +466,129 @@
                 ? cachedSubmissions 
                 : cachedSubmissions.filter(s => s.student_name === selectedFilter);
 
-            const list = document.getElementById('submissions-list');
-            list.innerHTML = '';
+            const container = document.getElementById('lessons-container');
+            container.innerHTML = '';
 
             if (filteredSubs.length === 0) {
-                list.innerHTML = '<p class="text-xs text-slate-500 italic py-4">No student responses match this filter.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-500 italic py-4">No student responses match this filter.</p>';
                 return;
             }
+
+            // Group submissions by topic_title (simulated or inferred from current active topic, or group by created date/topic if stored)
+            // Since exit_tickets currently link to class_id, we group by timestamp date or use active class topic. 
+            // To support multiple past lessons, we group by date or topic if available, or list under the class topic headers.
+            // Let's group by submission date string (e.g. "Today" or specific date) or topic groups.
+            const groups = {};
+            filteredSubs.forEach(s => {
+                const dateKey = new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                if (!groups[dateKey]) groups[dateKey] = [];
+                groups[dateKey].push(s);
+            });
 
             const activeClass = cachedClasses.find(c => c.id === getActiveClassId());
             const feedbackQuestions = activeClass ? (activeClass.feedback_questions || []) : [];
 
-            filteredSubs.forEach(s => {
-                const timeStr = new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                let ratingsHtml = '';
-                if (s.feedback_ratings) {
-                    ratingsHtml = Object.entries(s.feedback_ratings).map(([qIdx, score]) => {
-                        const questionText = feedbackQuestions[qIdx] || `Statement ${parseInt(qIdx) + 1}`;
-                        return `<div class="flex justify-between items-center text-[11px] text-slate-300 py-0.5 border-b border-slate-800/60 last:border-b-0">
-                            <span class="pr-2">${questionText}</span>
-                            <span class="font-bold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${score}/5</span>
-                        </div>`;
-                    }).join('');
-                } else {
-                    ratingsHtml = '<span class="text-xs text-slate-500 italic">No ratings recorded.</span>';
-                }
+            Object.entries(groups).forEach(([dateStr, subs]) => {
+                const lessonCard = document.createElement('div');
+                lessonCard.className = 'bg-slate-900 border border-slate-700/80 rounded-2xl p-5 space-y-4';
 
-                const card = document.createElement('div');
-                card.className = 'bg-slate-900 rounded-xl border border-slate-700 overflow-hidden transition';
-                card.innerHTML = `
-                    <div class="p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-800/50" onclick="toggleCardDetail('${s.id}')">
-                        <div class="flex items-center gap-3">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-white text-sm">${s.student_name}</span>
-                                    <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">${timeStr}</span>
+                // Calculate stats for this lesson group
+                const count = subs.length;
+                const lessonAvg = (subs.reduce((a, b) => a + Number(b.confidence), 0) / count).toFixed(1);
+                
+                // Rank struggles for this lesson
+                const struggleCounts = {};
+                subs.forEach(s => {
+                    const concept = s.difficult_concept || 'Not specified';
+                    struggleCounts[concept] = (struggleCounts[concept] || 0) + 1;
+                });
+                const rankedStruggles = Object.entries(struggleCounts).sort((a, b) => b[1] - a[1]);
+
+                let strugglesBadgesHtml = rankedStruggles.map(([concept, freq]) => `
+                    <span class="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-[11px] text-slate-200 px-2.5 py-1 rounded-lg">
+                        <span class="text-amber-400 font-semibold">${concept}</span>
+                        <span class="bg-slate-950 text-slate-400 text-[10px] px-1.5 py-0.2 rounded-full">${freq}</span>
+                    </span>
+                `).join('');
+
+                let subsHtml = '';
+                subs.forEach(s => {
+                    const timeStr = new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let ratingsHtml = '';
+                    if (s.feedback_ratings) {
+                        ratingsHtml = Object.entries(s.feedback_ratings).map(([qIdx, score]) => {
+                            const questionText = feedbackQuestions[qIdx] || `Statement ${parseInt(qIdx) + 1}`;
+                            return `<div class="flex justify-between items-center text-[11px] text-slate-300 py-0.5 border-b border-slate-800/60 last:border-b-0">
+                                <span class="pr-2">${questionText}</span>
+                                <span class="font-bold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${score}/5</span>
+                            </div>`;
+                        }).join('');
+                    }
+
+                    subsHtml += `
+                        <div class="bg-slate-950/60 rounded-xl border border-slate-800 overflow-hidden transition">
+                            <div class="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-900/50" onclick="toggleCardDetail('${s.id}')">
+                                <div class="flex items-center gap-3">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-white text-sm hover:text-emerald-400 transition cursor-pointer" onclick="event.stopPropagation(); openStudentHistory('${s.student_name}')">${s.student_name}</span>
+                                            <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded">${timeStr}</span>
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficult_concept}</span> | Can Explain: <span class="text-slate-300">${s.can_explain || 'N/A'}</span></p>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-slate-400 mt-0.5">Struggle: <span class="text-amber-300">${s.difficult_concept}</span> | Can Explain: <span class="text-slate-300">${s.can_explain || 'N/A'}</span></p>
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                                        Conf: ${s.confidence}/5
+                                    </span>
+                                    <span class="text-slate-500 text-xs font-bold" id="chevron-${s.id}">▼</span>
+                                </div>
+                            </div>
+                            <div id="detail-${s.id}" class="hidden bg-slate-900 border-t border-slate-800 p-4 space-y-3">
+                                <div class="space-y-2">
+                                    <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-500">Edit Student Name (If Typo):</span>
+                                    <div class="flex gap-2 max-w-sm">
+                                        <input type="text" id="edit-name-${s.id}" value="${s.student_name}" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white flex-1">
+                                        <button onclick="updateStudentName('${s.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition">Save Name</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-500">Learning Experience Ratings:</span>
+                                    <div class="mt-1 space-y-1 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                                        ${ratingsHtml}
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-1">
+                                    <button onclick="deleteSubmission('${s.id}')" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                        🗑️ Delete This Entry
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-1 rounded-full font-bold text-xs ${Number(s.confidence) <= 2 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
-                                Conf: ${s.confidence}/5
-                            </span>
-                            <span class="text-slate-500 text-xs font-bold" id="chevron-${s.id}">▼</span>
+                    `;
+                });
+
+                lessonCard.innerHTML = `
+                    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                            <span class="text-[10px] bg-slate-800 text-emerald-400 font-bold px-2 py-0.5 rounded border border-slate-700 uppercase">Lesson Date: ${dateStr}</span>
+                            <h4 class="font-bold text-white text-sm mt-1">Topic Overview & Responses (${count} student${count === 1 ? '' : 's'})</h4>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs">
+                            <span class="text-slate-300">Lesson Avg Conf: <strong class="text-emerald-400">${lessonAvg} / 5.0</strong></span>
                         </div>
                     </div>
-                    <div id="detail-${s.id}" class="hidden bg-slate-950/60 border-t border-slate-800 p-4 space-y-3">
-                        <div>
-                            <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-500">Learning Experience Ratings:</span>
-                            <div class="mt-1 space-y-1 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                                ${ratingsHtml}
-                            </div>
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Ranked Student Struggles:</span>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            ${strugglesBadgesHtml}
                         </div>
-                        <div class="flex justify-end pt-1">
-                            <button onclick="deleteSubmission('${s.id}')" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg transition">
-                                🗑️ Delete This Duplicate Entry
-                            </button>
-                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        ${subsHtml}
                     </div>
                 `;
-                list.appendChild(card);
+                container.appendChild(lessonCard);
             });
         }
 
@@ -519,6 +598,50 @@
             const isHidden = detailEl.classList.contains('hidden');
             detailEl.classList.toggle('hidden', !isHidden);
             chevronEl.innerText = isHidden ? '▲' : '▼';
+        }
+
+        async function updateStudentName(id) {
+            const newName = document.getElementById(`edit-name-${id}`).value.trim();
+            if (!newName) {
+                alert("Name cannot be empty");
+                return;
+            }
+            const { error } = await dbClient.from('exit_tickets').update({ student_name: newName }).eq('id', id);
+            if (error) {
+                alert("Failed to update name: " + error.message);
+                return;
+            }
+            await loadDashboard();
+        }
+
+        function openStudentHistory(studentName) {
+            document.getElementById('modal-student-name').innerText = studentName;
+            toggleModal('student-modal', true);
+
+            const historyList = document.getElementById('student-history-list');
+            historyList.innerHTML = '';
+
+            const studentTickets = cachedSubmissions.filter(s => s.student_name === studentName);
+
+            if (studentTickets.length === 0) {
+                historyList.innerHTML = '<p class="text-xs text-slate-500 italic py-4">No historical records found for this student.</p>';
+                return;
+            }
+
+            studentTickets.forEach(t => {
+                const dateStr = new Date(t.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900 border border-slate-700/80 p-3.5 rounded-xl space-y-2 text-xs';
+                item.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                        <span class="font-bold text-emerald-400">${dateStr}</span>
+                        <span class="bg-slate-800 px-2 py-0.5 rounded font-bold text-white">Confidence: ${t.confidence}/5</span>
+                    </div>
+                    <p class="text-slate-300">Struggle reported: <span class="text-amber-300 font-medium">${t.difficult_concept}</span></p>
+                    <p class="text-slate-300">Can explain rule: <span class="text-slate-200 font-medium">${t.can_explain || 'N/A'}</span></p>
+                `;
+                historyList.appendChild(item);
+            });
         }
 
         async function deleteSubmission(id) {
