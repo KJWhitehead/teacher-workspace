@@ -100,6 +100,7 @@
         let selectedConfidence = 3;
         let selectedExplain = 'Almost';
         let feedbackRatings = {};
+        let activeFeedbackQuestions = [];
 
         function getUrlClassId() {
             const params = new URLSearchParams(window.location.search);
@@ -136,13 +137,14 @@
                 feedback_questions: ["The explanations were clear.", "The examples helped me understand."]
             };
 
+            activeFeedbackQuestions = currentClass.feedback_questions || [];
+
             document.getElementById('class-badge').innerText = currentClass.name;
             document.getElementById('poll-topic').innerText = currentClass.topic_title;
 
             const conceptSelect = document.getElementById('difficultConcept');
             conceptSelect.innerHTML = '';
             
-            // Dummy null option to force explicit user selection
             const placeholderOpt = document.createElement('option');
             placeholderOpt.value = "";
             placeholderOpt.disabled = true;
@@ -166,7 +168,7 @@
             fbContainer.innerHTML = '';
             feedbackRatings = {};
 
-            (currentClass.feedback_questions || []).forEach((q, idx) => {
+            activeFeedbackQuestions.forEach((q, idx) => {
                 feedbackRatings[idx] = 4;
                 const row = document.createElement('div');
                 row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-b border-slate-800 pb-2 last:border-b-0';
@@ -240,7 +242,8 @@
                     confidence: selectedConfidence,
                     difficult_concept: finalConcept,
                     can_explain: selectedExplain,
-                    feedback_ratings: feedbackRatings
+                    feedback_ratings: feedbackRatings,
+                    feedback_questions_snapshot: activeFeedbackQuestions
                 }
             ]);
 
