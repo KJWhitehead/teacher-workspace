@@ -254,7 +254,7 @@
 
         let cachedClasses = [];
         let cachedSubmissions = [];
-        let lessonSortModes = {}; // stores sort mode per lesson date/key
+        let lessonSortModes = {};
 
         function getActiveClassId() {
             const savedId = localStorage.getItem('welsh_active_class_id');
@@ -397,7 +397,6 @@
                 return;
             }
 
-            // Group by Lesson Date or Active Topic (using date string as key)
             const groups = {};
             filteredSubs.forEach(s => {
                 const dateKey = new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -406,13 +405,11 @@
             });
 
             const activeClass = cachedClasses.find(c => c.id === getActiveClassId());
-            const feedbackQuestions = activeClass ? (activeClass.feedback_questions || []) : [];
 
             Object.entries(groups).forEach(([dateStr, subs]) => {
                 const lessonKey = dateStr.replace(/[^a-zA-Z0-9]/g, '_');
                 const sortMode = lessonSortModes[lessonKey] || 'recent';
 
-                // Sort submissions based on teacher preference
                 let sortedSubs = [...subs];
                 if (sortMode === 'abc') {
                     sortedSubs.sort((a, b) => a.student_name.localeCompare(b.student_name));
@@ -442,10 +439,14 @@
                 let subsHtml = '';
                 sortedSubs.forEach(s => {
                     const timeStr = new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Use snapshot questions stored with the submission if available, otherwise fallback to class questions
+                    const questionsForThisSub = s.feedback_questions_snapshot || (activeClass ? activeClass.feedback_questions : []);
+                    
                     let ratingsHtml = '';
                     if (s.feedback_ratings) {
                         ratingsHtml = Object.entries(s.feedback_ratings).map(([qIdx, score]) => {
-                            const questionText = feedbackQuestions[qIdx] || `Statement ${parseInt(qIdx) + 1}`;
+                            const questionText = questionsForThisSub[qIdx] || `Statement ${parseInt(qIdx) + 1}`;
                             return `<div class="flex justify-between items-center text-[11px] text-slate-300 py-0.5 border-b border-slate-800/60 last:border-b-0">
                                 <span class="pr-2">${questionText}</span>
                                 <span class="font-bold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${score}/5</span>
@@ -496,6 +497,10 @@
                     `;
                 });
 
+                // Get questions for the dropdown from the first submission in this date group (snapshot) or active class
+                const sampleSub = subs[0];
+                const questionsForDropdown = sampleSub.feedback_questions_snapshot || (activeClass ? activeClass.feedback_questions : []);
+
                 const lessonCard = document.createElement('div');
                 lessonCard.className = 'bg-slate-900 border border-slate-700/80 rounded-2xl p-5 space-y-4';
                 lessonCard.innerHTML = `
@@ -518,7 +523,7 @@
                             <span class="text-[9px] uppercase font-bold text-emerald-500 tracking-wider">Lesson Focus Metric</span>
                             <select id="focus-select-${lessonKey}" onchange="renderLessonFocusStat('${lessonKey}', ${JSON.stringify(subs).replace(/"/g, '&quot;')})" class="bg-slate-900 border border-slate-700 text-xs text-emerald-400 font-semibold rounded-lg p-2 mt-1 outline-none w-full sm:w-72">
                                 <option value="">-- Select statement to evaluate --</option>
-                                ${feedbackQuestions.map((q, idx) => `<option value="${idx}">${q}</option>`).join('')}
+                                ${questionsForDropdown.map((q, idx) => `<option value="${idx}">${q}</option>`).join('')}
                             </select>
                         </div>
                         <div id="focus-result-${lessonKey}" class="text-right hidden sm:block">
